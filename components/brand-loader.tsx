@@ -1,8 +1,15 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import { usePathname } from 'next/navigation';
 
 const key = 'prakruthi-brand-intro-v1';
 export function BrandLoader() {
+  const pathname = usePathname();
+  if (pathname === '/admin' || pathname.startsWith('/admin/')) return null;
+  return <PublicBrandLoader />;
+}
+
+function PublicBrandLoader() {
   const [visible, setVisible] = useState(true);
   const video = useRef<HTMLVideoElement>(null);
   const skip = useRef<HTMLButtonElement>(null);
