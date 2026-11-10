@@ -30,7 +30,7 @@ assert((await db.query('select * from prakruthi_orders')).rows.length===1,'Appro
 await db.exec("update prakruthi_orders set status='confirmed';insert into prakruthi_categories(name)values('SQL test category');");
 assert((await db.query("select status from prakruthi_orders")).rows[0].status==='confirmed','Approved admins can update fulfilment status');
 await forbidden('delete from prakruthi_orders','Order deletion is not granted to browser admins');
-await db.exec("insert into prakruthi_products(id,slug,name,category,price,image,active)values('private-test','private-test','Private test','SQL test category',25,'/images/logo.png',false)");
+await db.exec("insert into prakruthi_products(id,slug,name,category,price,image,active)values('private-test','private-test','Private test','SQL test category',25,'/images/prakruthi-icon.svg',false)");
 await db.exec("reset role;select set_config('request.jwt.claim.sub','',false);set role anon");
 assert((await db.query("select * from prakruthi_products where slug='private-test'")).rows.length===0,'Unpublished prakruthi_products are not readable by guests');
 await forbidden(`select prakruthi_place_order('${JSON.stringify(customerInput)}'::jsonb,'[{"slug":"private-test","quantity":1}]'::jsonb)`,'Checkout rejects unpublished prakruthi_products');
