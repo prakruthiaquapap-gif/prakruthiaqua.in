@@ -1,0 +1,12 @@
+'use client';
+import { createContext,useContext,useEffect,useState } from 'react';
+import { usePathname } from 'next/navigation';
+import { products as seedProducts,categories as seedCategories,type Product } from '@/lib/catalog';
+import { initialBanners,type Banner } from '@/lib/banner-data';
+import { supabase } from '@/lib/supabase';
+import { readDemo,demoPreviewEnabled,type Category } from '@/lib/admin-data';
+type Storefront={products:Product[];categories:string[];banners:Banner[];loading:boolean;demo:boolean};
+const initial:Storefront={products:seedProducts,categories:seedCategories,banners:initialBanners,loading:!!supabase,demo:false};
+const Context=createContext<Storefront>(initial);
+export const useStorefront=()=>useContext(Context);
+export function StorefrontProvider({children}:{children:React.ReactNode}){const path=usePathname();const[state,setState]=useState(initial);useEffect(()=>{let live=true;async function refresh(){if(demoPreviewEnabled()){const d=readDemo();setState({products:d.products.filter(p=>p.active!==false&&d.categories.some(c=>c.name===p.category&&c.active)),categories:['All products',...d.categories.filter(c=>c.active).sort((a,b)=>a.position-b.position).map(c=>c.name)],banners:d.banners.filter(b=>b.active!==false).sort((a,b)=>(a.position||0)-(b.position||0)),loading:false,demo:true});return}if(!supabase){setState(s=>({...s,loading:false,demo:false}));return}const[p,c,b]=await Promise.all([supabase.from('prakruthi_products').select('*').eq('active',true).order('created_at'),supabase.from('prakruthi_categories').select('*').eq('active',true).order('position'),supabase.from('prakruthi_banners').select('*').eq('active',true).order('position')]);if(!live)return;if(p.error||c.error||b.error){setState(s=>({...s,loading:false,demo:false}));return}setState({products:p.data as Product[],categories:['All products',...(c.data as Category[]).map(x=>x.name)],banners:b.data as Banner[],loading:false,demo:false})}refresh();window.addEventListener('focus',refresh);window.addEventListener('prakruthi-catalog-changed',refresh);return()=>{live=false;window.removeEventListener('focus',refresh);window.removeEventListener('prakruthi-catalog-changed',refresh)}},[]);return <Context.Provider value={state}>{state.demo&&!path.startsWith('/admin')&&<div className="store-demo-notice">Admin demo preview · Changes and orders are stored only in this browser.<button onClick={()=>{sessionStorage.removeItem('prakruthi-demo-preview');location.href='/'}}>Exit demo preview</button></div>}{children}</Context.Provider>}
