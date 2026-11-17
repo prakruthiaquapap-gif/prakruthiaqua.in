@@ -1,12 +1,13 @@
 -- ==========================================================================
--- Prakruthi Aqua — homepage hero videos
+-- Prakruthi Aqua — homepage hero slides (image or video)
 -- Run once in the Supabase SQL editor, after supabase/full-setup.sql.
 -- Safe to re-run: every statement is idempotent and keeps admin edits.
 --
 -- What it does
+--   0. Lets each homepage slide be an IMAGE banner or a VIDEO (admin's choice).
+--      Every slide that is switched on shows in the hero, in display order.
 --   1. Adds a desktop and a mobile video field to each homepage slide
---      (public.prakruthi_banners). The homepage shows the first TWO
---      published slides, each playing its own video.
+--      (public.prakruthi_banners).
 --   2. Creates the public `prakruthi-hero-videos` storage bucket with a
 --      30 MB per-file limit (MP4, WebM or MOV). Anyone can watch the
 --      videos; only approved store admins can upload, replace or delete.
@@ -14,6 +15,20 @@
 --      upload your own from the admin panel.
 -- ==========================================================================
 begin;
+
+-- 0. Image-or-video choice per slide. On first run, the two seeded slides become
+--    video slides and the other three seeded slides are switched off; after that the
+--    admin's choices are never overwritten.
+do $$
+begin
+  if not exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'prakruthi_banners' and column_name = 'mediaType') then
+    alter table public.prakruthi_banners add column "mediaType" text not null default 'image';
+    update public.prakruthi_banners set "mediaType" = 'video' where id in ('nutrition', 'plants');
+    update public.prakruthi_banners set active = false where id in ('water', 'wellbeing', 'essentials');
+  end if;
+end $$;
+alter table public.prakruthi_banners drop constraint if exists prakruthi_banners_media_type_valid;
+alter table public.prakruthi_banners add constraint prakruthi_banners_media_type_valid check ("mediaType" in ('image', 'video'));
 
 -- 1. Video fields on homepage slides (empty = use the bundled default video)
 alter table public.prakruthi_banners add column if not exists "videoDesktop" text not null default '';

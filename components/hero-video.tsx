@@ -46,7 +46,7 @@ export default function HeroVideo({ clips, active, autoplay, onAdvance, onReady 
     const s = state.current;
     if (id === s.front) return;
     s.front = id; setFront(id);
-    if (id === null) { s.onReady(false); window.setTimeout(() => { if (state.current.front === null) pauseOthers(''); }, FADE * 1000); return; }
+    if (id === null) { s.onReady(false); window.setTimeout(() => { if (state.current.front === null) pauseOthers(''); s.swapping = false; }, FADE * 1000); return; }
     const v = els.current[id]; if (!v) return;
     s.swapping = true; s.onReady(false);
     v.currentTime = 0; play(v);
@@ -65,7 +65,8 @@ export default function HeroVideo({ clips, active, autoplay, onAdvance, onReady 
       const s = state.current; const v = s.front ? els.current[s.front] : null;
       if (v && s.visible && !s.swapping && v.duration && v.currentTime >= v.duration - FADE) {
         if (s.single) show(s.front === '0a' ? '0b' : '0a');
-        else if (s.autoplay) s.onAdvance();
+        // Ask for the next slide once; the guard is released when the next slide takes over.
+        else if (s.autoplay) { s.swapping = true; s.onAdvance(); window.setTimeout(() => { state.current.swapping = false; }, 2500); }
         else { v.currentTime = 0; play(v); }
       }
       raf = requestAnimationFrame(tick);

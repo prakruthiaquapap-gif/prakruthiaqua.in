@@ -283,3 +283,27 @@
   .admin-video-field .admin-media-drop { grid-template-columns: 1fr; }
   .admin-video-field .admin-media-drop.is-portrait { grid-template-columns: 110px 1fr; }
 }
+
+/* Hero slides: image/video choice and on/off switches */
+.admin-slide-media { display: grid; gap: 12px; }
+.admin-slide-media > .admin-media-label { font-size: 13px; font-weight: 700; color: var(--forest-deep); }
+.admin-segment { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 6px; border-radius: 16px; background: var(--paper); border: 1px solid var(--line); }
+.admin-app .admin-segment label { position: relative; display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 8px; min-height: 46px; border-radius: 12px; font-size: 14px; font-weight: 700; color: var(--muted); cursor: pointer; transition: background 0.2s, color 0.2s, box-shadow 0.2s; }
+.admin-segment input { position: absolute; opacity: 0; pointer-events: none; }
+.admin-app .admin-segment label:hover { color: var(--forest-deep); }
+.admin-app .admin-segment label.is-on { background: var(--forest-deep); color: var(--white); box-shadow: 0 10px 22px -14px rgba(38, 63, 4, 0.8); }
+.admin-app .admin-segment label:has(input:focus-visible) { outline: 2px solid var(--leaf); outline-offset: 2px; }
+
+.admin-app .admin-switch { position: relative; display: inline-flex; flex-direction: row; align-items: center; gap: 12px; font-size: 14px; font-weight: 700; color: var(--forest-deep); cursor: pointer; }
+.admin-switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.admin-switch-track { position: relative; flex-shrink: 0; width: 46px; height: 26px; border-radius: 99px; background: var(--line-strong); transition: background 0.25s; }
+.admin-switch-track::after { content: ''; position: absolute; left: 3px; top: 3px; width: 20px; height: 20px; border-radius: 50%; background: var(--white); box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25); transition: transform 0.25s var(--ease); }
+.admin-switch input:checked + .admin-switch-track { background: var(--leaf); }
+.admin-switch input:checked + .admin-switch-track::after { transform: translateX(20px); }
+.admin-switch input:focus-visible + .admin-switch-track { outline: 2px solid var(--forest); outline-offset: 2px; }
+.admin-switch input:disabled + .admin-switch-track { opacity: 0.5; }
+.admin-app .admin-switch-inline { margin-right: auto; font-size: 13px; }
+
+.admin-app .admin-banner-card.is-off > div > :is(img, video) { filter: grayscale(0.85) brightness(0.8); }
+.admin-app .admin-banner-card.is-off { opacity: 0.88; }
+.admin-app .admin-banner-card > section > div { display: flex; align-items: center; gap: 10px; }
