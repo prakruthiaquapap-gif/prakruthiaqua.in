@@ -148,13 +148,13 @@ export function SiteProvider({ children }: { children: React.ReactNode }) {
         <div className="container">
           <div className="footer-cta">
             <div>
-              <p className="eyebrow eyebrow-dark">Need a hand?</p>
+              <p className="eyebrow eyebrow-leaf">Need a hand?</p>
               <h2>Not sure what your tank needs? <em>Ask us.</em></h2>
               <p>Real people, real advice — talk to our team before you buy.</p>
             </div>
             <div className="footer-cta-actions">
-              <a className="btn btn-dark" href="https://wa.me/918904373735" target="_blank" rel="noreferrer"><MessageCircle size={17} /> Chat on WhatsApp</a>
-              <Link className="btn btn-outline" href="/contact/">Contact us <ArrowRight size={16} /></Link>
+              <a className="btn btn-leaf" href="https://wa.me/918904373735" target="_blank" rel="noreferrer"><MessageCircle size={17} /> Chat on WhatsApp</a>
+              <Link className="btn btn-outline-light" href="/contact/">Contact us <ArrowRight size={16} /></Link>
             </div>
           </div>
 
