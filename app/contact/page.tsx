@@ -17,6 +17,8 @@ export default function Contact() {
         description="Questions about a product, or need advice for your aquarium? Our team is ready to help."
         image="/images/water.jpg"
         imageAlt="A peaceful underwater aquarium scene"
+        inset="/images/plants.jpg"
+        tag="Mon – Sat · Bengaluru"
         primaryLabel="Send a message"
         primaryHref="#contact-details"
         secondaryLabel="Explore the shop"
@@ -38,13 +40,20 @@ export default function Contact() {
           <ContactForm />
         </div>
       </section>
-      <section className="section section-paper section-tight">
+      <section className="section section-paper">
         <div className="container">
           <div className="section-head">
             <div><p className="eyebrow"><span className="dot" />Find us in Bengaluru</p><h2>Visit <em>us.</em></h2></div>
             <a className="link-arrow" href={mapLink} target="_blank" rel="noreferrer">Open in Google Maps <ArrowUpRight size={16} /></a>
           </div>
-          <iframe className="map" loading="lazy" src={`https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed`} title="Prakruthi Aqua map location" referrerPolicy="no-referrer-when-downgrade" />
+          <div className="map-wrap">
+            <iframe className="map" loading="lazy" src={`https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed`} title="Prakruthi Aqua map location" referrerPolicy="no-referrer-when-downgrade" />
+            <div className="map-card">
+              <span className="icon-tile"><MapPin size={19} /></span>
+              <div><b>Prakruthi Aqua</b><p>Attur Layout, Chikkadinne, Yelahanka New Town, Bengaluru</p></div>
+              <a className="btn btn-dark" href={mapLink} target="_blank" rel="noreferrer">Directions <ArrowUpRight size={15} /></a>
+            </div>
+          </div>
         </div>
       </section>
     </main>

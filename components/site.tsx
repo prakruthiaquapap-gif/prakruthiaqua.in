@@ -131,7 +131,8 @@ export function SiteProvider({ children }: { children: React.ReactNode }) {
             </div>
           </div>
         </header>
-        <div className="ticker" aria-hidden="true">
+      </div>
+      <div className="ticker" aria-hidden="true">
           <div className="ticker-track">
             {[0, 1].map((k) => (
               <span key={k}>
@@ -139,7 +140,6 @@ export function SiteProvider({ children }: { children: React.ReactNode }) {
               </span>
             ))}
           </div>
-        </div>
       </div>
 
       {children}
@@ -148,20 +148,25 @@ export function SiteProvider({ children }: { children: React.ReactNode }) {
         <div className="container">
           <div className="footer-cta">
             <div>
-              <p className="eyebrow eyebrow-leaf">Need a hand?</p>
+              <p className="eyebrow eyebrow-dark">Need a hand?</p>
               <h2>Not sure what your tank needs? <em>Ask us.</em></h2>
+              <p>Real people, real advice — talk to our team before you buy.</p>
             </div>
             <div className="footer-cta-actions">
-              <a className="btn btn-leaf" href="https://wa.me/918904373735" target="_blank" rel="noreferrer"><MessageCircle size={17} /> Chat on WhatsApp</a>
-              <Link className="btn btn-outline-light" href="/contact/">Contact us <ArrowRight size={16} /></Link>
+              <a className="btn btn-dark" href="https://wa.me/918904373735" target="_blank" rel="noreferrer"><MessageCircle size={17} /> Chat on WhatsApp</a>
+              <Link className="btn btn-outline" href="/contact/">Contact us <ArrowRight size={16} /></Link>
             </div>
           </div>
 
           <div className="footer-grid">
             <div className="footer-brand">
-              <Logo light />
+              <span className="footer-logo"><Logo /></span>
               <p>Fish nutrition, plant care, water care and bird food — made with care in Bengaluru for the little worlds you look after.</p>
-
+              <div className="footer-contact">
+                <a href="tel:+918904373735"><PhoneCall size={15} /> +91 89043 73735</a>
+                <a href="mailto:info@prakruthiaqua.in"><Mail size={15} /> info@prakruthiaqua.in</a>
+                <span><MapPin size={15} /> Yelahanka New Town, Bengaluru</span>
+              </div>
             </div>
             <div>
               <h3>Shop</h3>
@@ -193,12 +198,6 @@ export function SiteProvider({ children }: { children: React.ReactNode }) {
               </ul>
             </div>
           </div>
-
-              <div className="footer-contact">
-                <a href="tel:+918904373735"><PhoneCall size={15} /> +91 89043 73735</a>
-                <a href="mailto:info@prakruthiaqua.in"><Mail size={15} /> info@prakruthiaqua.in</a>
-                <span><MapPin size={15} /> Yelahanka New Town, Bengaluru</span>
-              </div>
 
           <div className="footer-bottom">
             <span>© {new Date().getFullYear()} Prakruthi Aqua. All rights reserved.</span>

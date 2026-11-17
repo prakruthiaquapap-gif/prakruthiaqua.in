@@ -124,7 +124,7 @@ export function ShopByNeed() {
       <div className="pills" role="group" aria-label="Filter by category">
         {categories.map((c) => (
           <button key={c} className="pill" aria-pressed={active === c} onClick={() => setActive(c)}>
-            {c === 'All products' ? 'All' : `#${c.replace(/\s+/g, '')}`}
+            {c === 'All products' ? 'All' : c}
           </button>
         ))}
       </div>
