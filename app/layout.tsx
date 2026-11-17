@@ -5,6 +5,8 @@ import { WishlistProvider } from '@/components/wishlist';
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import './admin.css';
+import './home.css';
+import './heroes.css';
 import { SiteProvider } from '@/components/site';
 
 export const metadata: Metadata = {
@@ -26,7 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link
           rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Jost:wght@400;500;600;700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap"
         />
       </head>
       <body>

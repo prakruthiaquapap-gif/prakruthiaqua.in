@@ -17,7 +17,17 @@ No account can grant itself admin membership from the website. Regular authentic
 4. Rebuild and restart the website. Sign in at `/admin/` with the admin email/password. Use Supabase Authentication's dashboard for password resets and account administration.
 5. Admin image upload uses the public `prakruthi-catalog-media` bucket, with a 5 MB limit and admin-only upload policies. Product and banner images accept local `/images/` paths or HTTPS URLs.
 
-## What updates the storefront
+## Homepage hero videos
+
+The homepage hero shows the **first two published slides** (by display order), and each slide plays its own video. Manage them under **Hero videos** in the admin.
+
+1. Run `supabase/hero-videos.sql` once in the Supabase SQL editor (after `full-setup.sql`). It is safe to re-run. It adds a desktop and a mobile video field to each slide, creates the public `prakruthi-hero-videos` storage bucket with a **30 MB** per-file limit (MP4, WebM or MOV) and admin-only upload, replace and delete, and points the two seeded slides at the bundled videos.
+2. Edit a slide and upload a **desktop video** (landscape, 1920 × 1080 recommended) and a **mobile video** (portrait, 1080 × 1920 recommended). The mobile video is optional; the desktop video is used on phones when it is empty. You can also paste an HTTPS link or a `/videos/…` path.
+3. Save. The homepage plays slide 1's video, then dissolves into slide 2 with its video, and loops. Text and video always change together.
+
+Until the SQL is run, the homepage keeps using the bundled videos in `public/videos/`, and saving a slide shows a message asking you to run the script. In the local demo, video files cannot be uploaded (browser storage is too small for video); paste a link instead.
+
+
 
 Published products appear in Shop All and at `/product/?id=PRODUCT_SLUG`. This query route supports newly added products without rebuilding a static deployment. Existing `/products/SLUG/` routes remain available for original catalog products; the new catalog links use the live route. Featured products are displayed on the homepage. Active categories appear as shop filters. Published banner slides are ordered by their position. The initial named navigation ranges continue to point to the original category names; update those links in source if those categories are renamed. Live catalog data refreshes on window focus and after an admin save in the current page. A page refresh also loads the latest data.
 

@@ -16,9 +16,9 @@ export default function ShopPage() {
         title="Thoughtful essentials."
         accent="Thriving little worlds."
         description="Fish nutrition, aquatic plant care, water care and bird food — everything that helps your aquarium thrive."
-        image="/images/plants.jpg"
-        imageAlt="A lush underwater garden of aquatic plants"
-        disc={{ image: '/images/macro-nutrients-CEJJs9.webp', alt: 'Prakruthi Aqua Macro Nutrients', name: 'Macro Nutrients', price: 'Bestseller · Plant care', label: 'Customer favourite', href: '/product/?id=macro-nutrients-CEJJs9' }}
+        image="/images/shop-aquarium.jpg"
+        imageAlt="A lush planted aquarium with neon tetras and an angelfish under rays of light"
+        disc={{ image: '/images/aquarium.jpg', alt: 'Colourful fish swimming in a bright aquarium', name: 'Fish · Plants · Water', price: 'Everything your tank needs', label: 'The full collection', href: '#catalog', photo: true }}
         primaryLabel="Browse products"
         primaryHref="#catalog"
         secondaryLabel="Need help choosing?"

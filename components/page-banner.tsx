@@ -1,7 +1,9 @@
 import Link from 'next/link';
 import { ArrowUpRight, ArrowDown, ArrowRight, Leaf } from 'lucide-react';
+import { Bubbles, Caustics, LightRays, Wave } from './aquatic-fx';
+import FitScreen from './fit-screen';
 
-type Disc = { image: string; alt?: string; name?: string; price?: string; href?: string; label?: string; logo?: boolean };
+type Disc = { image: string; alt?: string; name?: string; price?: string; href?: string; label?: string; logo?: boolean; photo?: boolean };
 
 type Props = {
   label: string; eyebrow?: string; title: string; accent: string; description: string;
@@ -11,79 +13,106 @@ type Props = {
   disc?: Disc; stats?: [string, string][]; links?: [string, string][];
 };
 
+/** Shared deep-water backdrop for every inner-page hero. */
+export function HeroBackdrop({ word }: { word?: string }) {
+  return (
+    <div className="ph-bg" aria-hidden="true">
+      <span className="ph-glow" />
+      <LightRays className="ph-rays" />
+      <Caustics className="ph-caustics" />
+      <Bubbles count={14} className="ph-bubbles" />
+      {word && <span className="ph-word">{word}</span>}
+    </div>
+  );
+}
+
 export default function PageBanner(p: Props) {
-  const crumbs = <nav className="crumbs crumbs-dark" aria-label="Breadcrumb"><Link href="/">Home</Link><span>/</span><span>{p.label}</span></nav>;
+  const crumbs = <nav className="ph-crumbs" aria-label="Breadcrumb"><Link href="/">Home</Link><span aria-hidden="true">/</span><span>{p.label}</span></nav>;
+  const eyebrow = <p className="ph-eyebrow"><i aria-hidden="true" />{p.eyebrow || p.label}</p>;
+  const title = <h1 id="page-hero-title" className="ph-title">{p.title} <em>{p.accent}</em></h1>;
+  const actions = (p.primaryHref || p.secondaryHref) && (
+    <div className="ph-actions">
+      {p.primaryHref && <a className="aqx-cta ph-cta" href={p.primaryHref}><span>{p.primaryLabel}</span><i><ArrowDown size={17} /></i></a>}
+      {p.secondaryHref && (p.primaryHref
+        ? <Link className="ph-link" href={p.secondaryHref}>{p.secondaryLabel} <ArrowRight size={15} /></Link>
+        : <Link className="aqx-cta ph-cta" href={p.secondaryHref}><span>{p.secondaryLabel}</span><i><ArrowUpRight size={17} /></i></Link>)}
+    </div>
+  );
 
   if (p.compact || !p.image) {
     return (
-      <section className="page-hero page-hero-compact" aria-labelledby="page-hero-title">
-        <div className="container">
+      <section className="ph ph-compact" aria-labelledby="page-hero-title">
+        <HeroBackdrop word={p.label} />
+        <div className="container ph-compact-inner">
           {crumbs}
-          <div className="page-hero-row">
-            <div>
-              <p className="eyebrow"><span className="dot" />{p.eyebrow || p.label}</p>
-              <h1 id="page-hero-title">{p.title} <em>{p.accent}</em></h1>
-            </div>
-            <div className="page-hero-side">
-              <p className="lead">{p.description}</p>
-              {(p.primaryHref || p.secondaryHref) && (
-                <div className="hero-actions">
-                  {p.primaryHref && <a className="btn btn-dark" href={p.primaryHref}>{p.primaryLabel} <ArrowDown size={16} /></a>}
-                  {p.secondaryHref && <Link className="btn btn-outline" href={p.secondaryHref}>{p.secondaryLabel} <ArrowUpRight size={16} /></Link>}
-                </div>
-              )}
+          <div className="ph-compact-row">
+            <div>{eyebrow}{title}</div>
+            <div className="ph-compact-side">
+              <p className="ph-lead">{p.description}</p>
+              {actions}
             </div>
           </div>
-          {p.points && <ul className="page-hero-points">{p.points.map((x) => <li key={x}><Leaf size={13} /> {x}</li>)}</ul>}
+          {p.points && <ul className="ph-points">{p.points.map((x) => <li key={x}><Leaf size={13} /> {x}</li>)}</ul>}
         </div>
+        <Wave className="ph-wave" />
       </section>
     );
   }
 
-  const disc = p.disc || (p.inset ? { image: p.inset, alt: p.insetAlt, photo: true } : undefined);
-  const discIsPhoto = !p.disc && !!p.inset;
+  const disc = p.disc || (p.inset ? { image: p.inset, alt: p.insetAlt } : undefined);
+  const discKind = p.disc?.logo ? ' is-logo' : p.disc?.photo || (!p.disc && p.inset) ? ' is-photo' : '';
+  const card = p.disc?.name
+    ? { label: p.disc.label || 'Featured', name: p.disc.name, sub: p.disc.price, href: p.disc.href }
+    : p.tag ? { label: 'Prakruthi Aqua', name: p.tag, sub: undefined, href: undefined } : null;
+  const cardInner = card && (
+    <>
+      <span className="ph-card-text"><small>{card.label}</small><b>{card.name}</b>{card.sub && <i>{card.sub}</i>}</span>
+      {card.href && <span className="ph-card-go"><ArrowUpRight size={16} /></span>}
+    </>
+  );
 
   return (
-    <section className="bn pb" aria-labelledby="page-hero-title">
-      <div className="bn-deco" aria-hidden="true">
-        <span className="bn-shape" />
-        <img className="bn-watermark" src="/images/prakruthi-icon.svg" alt="" />
-      </div>
+    <section className="ph" aria-labelledby="page-hero-title">
+      <FitScreen />
+      <HeroBackdrop word={p.label} />
 
-      <div className="container bn-grid">
-        <div className="bn-copy">
+      <div className="container ph-grid">
+        <div className="ph-copy">
           {crumbs}
-          <p className="bn-eyebrow"><Leaf size={13} /> {p.eyebrow || p.label}</p>
-          <h1 id="page-hero-title">{p.title} <em>{p.accent}</em></h1>
-          <p className="bn-lead">{p.description}</p>
-          <div className="bn-actions">
-            {p.primaryHref && <a className="btn btn-dark btn-lg" href={p.primaryHref}>{p.primaryLabel} <ArrowDown size={16} /></a>}
-            {p.secondaryHref && <Link className="link-line" href={p.secondaryHref}>{p.secondaryLabel} <ArrowRight size={14} /></Link>}
-          </div>
+          {eyebrow}
+          {title}
+          <p className="ph-lead">{p.description}</p>
+          {actions}
           {p.stats && (
-            <ul className="bn-stats">
+            <ul className="ph-stats">
               {p.stats.map(([v, l]) => <li key={l}><b>{v}</b><span>{l}</span></li>)}
             </ul>
           )}
         </div>
 
-        <div className="bn-stage">
-          <div className="bn-arch"><img className="is-visible" src={p.image} alt={p.imageAlt || ''} fetchPriority="high" /></div>
+        <div className="ph-stage">
+          <span className="ph-ring" aria-hidden="true" />
+          <div className="ph-window">
+            {/* Inner layer is hard-clipped to the arch (clip-path), so Safari never shows square corners. */}
+            <div className="ph-window-clip">
+              <img src={p.image} alt={p.imageAlt || ''} fetchPriority="high" />
+              <Caustics />
+              <Bubbles count={8} />
+              <span className="ph-glass" aria-hidden="true" />
+            </div>
+          </div>
           {disc && (
-            <div className={`bn-disc${discIsPhoto ? ' bn-disc-photo' : ''}${p.disc?.logo ? ' bn-disc-logo' : ''}`}>
-              <img src={disc.image} alt={disc.alt || ''} />
+            <div className={`ph-disc${discKind}`}>
+              <span className="ph-disc-clip"><img src={disc.image} alt={disc.alt || ''} /></span>
             </div>
           )}
-          {p.disc?.name && (
-            p.disc.href
-              ? <Link href={p.disc.href} className="bn-price"><span><small>{p.disc.label || 'Featured'}</small><b>{p.disc.name}</b>{p.disc.price && <i>{p.disc.price}</i>}</span><span className="bn-price-go"><ArrowUpRight size={16} /></span></Link>
-              : <span className="bn-price"><span><small>{p.disc.label || 'Featured'}</small><b>{p.disc.name}</b>{p.disc.price && <i>{p.disc.price}</i>}</span></span>
-          )}
-          {!p.disc?.name && p.tag && <span className="bn-price"><span><small>Prakruthi Aqua</small><b>{p.tag}</b></span></span>}
-          <span className="bn-badge" aria-hidden="true">
+          {card && (card.href
+            ? <Link href={card.href} className="ph-card">{cardInner}</Link>
+            : <span className="ph-card">{cardInner}</span>)}
+          <span className="ph-badge" aria-hidden="true">
             <svg viewBox="0 0 120 120">
-              <defs><path id="pb-circle" d="M60,60 m-46,0 a46,46 0 1,1 92,0 a46,46 0 1,1 -92,0" /></defs>
-              <text><textPath href="#pb-circle" textLength="286" lengthAdjust="spacing">PRAKRUTHI AQUA ✦ MADE IN BENGALURU ✦</textPath></text>
+              <defs><path id="ph-circle" d="M60,60 m-46,0 a46,46 0 1,1 92,0 a46,46 0 1,1 -92,0" /></defs>
+              <text><textPath href="#ph-circle" textLength="286" lengthAdjust="spacing">PRAKRUTHI AQUA ✦ MADE IN BENGALURU ✦</textPath></text>
             </svg>
             <img src="/images/prakruthi-icon.svg" alt="" />
           </span>
@@ -91,14 +120,13 @@ export default function PageBanner(p: Props) {
       </div>
 
       {(p.links || p.points) && (
-        <div className="container bn-nav pb-nav">
-          <div className="pb-links">
-            {p.links
-              ? p.links.map(([l, h]) => <Link key={h} href={h}><Leaf size={13} /> {l}</Link>)
-              : p.points!.map((x) => <span key={x}><Leaf size={13} /> {x}</span>)}
-          </div>
+        <div className={`container ph-chips${p.links ? '' : ' is-info'}`}>
+          {p.links
+            ? p.links.map(([l, h]) => <Link key={h} href={h}><Leaf size={13} /> {l}</Link>)
+            : p.points!.map((x) => <span key={x}><Leaf size={13} /> {x}</span>)}
         </div>
       )}
+      <Wave className="ph-wave" />
     </section>
   );
 }

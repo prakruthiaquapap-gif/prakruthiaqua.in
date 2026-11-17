@@ -47,8 +47,8 @@ export default function About() {
         title="Rooted in nature."
         accent="Made for life."
         description="Prakruthi Aqua is your partner in aquarium care — fish nutrition, plant care and water essentials that help little underwater worlds thrive."
-        image="/images/plants.jpg"
-        imageAlt="A thriving planted aquarium"
+        image="/images/aquarium-essentials.jpg"
+        imageAlt="A single orange goldfish with flowing fins against dark water"
         disc={{ image: '/images/prakruthi-icon.svg', alt: 'Prakruthi Aqua tree emblem', name: 'Fish · Plants · Water', label: 'Our three roots', logo: true }}
         primaryLabel="Read our story"
         primaryHref="#our-story"

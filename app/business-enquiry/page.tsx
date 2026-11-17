@@ -15,8 +15,8 @@ export default function BusinessEnquiry() {
         title="Your business."
         accent="Our shared passion."
         description="Connect with Prakruthi Aqua about products for your store, distribution network or aquarium service business."
-        image="/images/aquarium-essentials.jpg"
-        imageAlt="A vibrant, well-kept aquarium"
+        image="/images/plants.jpg"
+        imageAlt="A thriving planted aquarium"
         disc={{ image: '/images/water-conditioner-oTMjrX.webp', alt: 'Prakruthi Aqua Water Conditioner', name: 'Become a dealer', label: 'Dealer portal', href: 'https://dealers.prakruthiaqua.in/' }}
         stats={[['3', 'Partner types'], ['5', 'Product ranges'], ['Pan-India', 'Dispatch']]}
         points={['Retail & online stores', 'Wholesale & distribution', 'Aquarium service providers']}

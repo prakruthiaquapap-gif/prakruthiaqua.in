@@ -3,12 +3,12 @@
 /* ==========================================================================
    Prakruthi Aqua — editorial storefront
    White · Black · Logo green (leaf #8DC63F, forest #2F6A1E)
-   Serif display (Cormorant Garamond) + clean sans (Jost)
+   Typeface: Manrope (display + text)
    ========================================================================== */
 
 @theme {
-  --font-sans: 'Jost', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --font-serif: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  --font-sans: 'Manrope', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-serif: 'Manrope', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
 
 :root {
@@ -1880,3 +1880,107 @@ html { scroll-padding-top: 130px; }
 .footer-cta .btn-outline-light { border-color: rgba(255, 255, 255, 0.45); color: var(--white); }
 .footer-logo { background: none; padding: 0; border-radius: 0; }
 .footer-logo .brand-original-wordmark { filter: brightness(0) invert(1); }
+
+/* ==========================================================================
+   Manrope typography layer (site-wide)
+   Display text that was set in the serif keeps its visual size through
+   font-size-adjust, and gets Manrope's bold, tightly tracked display style.
+   ========================================================================== */
+body { letter-spacing: -0.005em; }
+h1, h2, h3, h4,
+.brand-word b, .dropdown-grid b, .mobile-menu-links a, .search-result-text b, .cart-line-body > a, .zoom p,
+.hero-spotlight-text b, .hero-count, .arch-copy b, .story-copy blockquote, .stats strong, .step-num, .pdp-help b,
+.vision blockquote, .goal-num, .policy-index, .not-found-code, .perk b, .spot-pick b, .need-promo-copy b,
+.story-stats dd, .about-hero-stats dd, .about-story-lead, .about-strip figcaption span, .pillars-num, .map-card b,
+.hv-item b, .hw-item b, .hp-num, .hp-body b, .hs-copy blockquote, .hs-stats dd, .bn-stats b, .bn-price b, .bn-thumb-text small,
+.hx-count, .hx-product-text b, .hb-product-text b, .hb-count,
+.admin-brand > span, .admin-metric strong, .admin-login-brand > span { font-size-adjust: 0.44; }
+.trust-card h3, .site-footer h3, .contact-cards h3 { font-size-adjust: none; }
+
+h1, h2, h3, h4 { font-weight: 700; letter-spacing: -0.035em; line-height: 1.08; }
+h1 em, h2 em, h3 em, blockquote em { font-style: normal; font-weight: 300; letter-spacing: -0.03em; }
+.pcard-body h3 { font-weight: 700; letter-spacing: -0.025em; }
+.brand-word b { font-weight: 800; letter-spacing: 0.12em; }
+.stats strong, .story-stats dd, .about-hero-stats dd, .hs-stats dd, .bn-stats b, .not-found-code { font-weight: 800; letter-spacing: -0.045em; }
+.mobile-menu-links a[aria-current='page'], .story-copy blockquote, .step-num, .goal-num, .policy-index,
+.not-found-code, .pillars-num, .hp-num, .hs-copy blockquote, .bn-thumb-text small { font-style: normal; }
+.step-num, .goal-num, .policy-index, .pillars-num, .hp-num { font-weight: 800; letter-spacing: -0.04em; }
+
+/* ==========================================================================
+   Mobile fit — each page hero fills exactly one screen (between the top
+   header and the bottom tab bar) and no row is clipped behind a sideways scroll.
+   ========================================================================== */
+:root { --m-chrome: 195px; } /* top bar + header + ticker (127px) + bottom tab bar (68px) */
+@media (max-width: 720px) {
+  /* Inner page heroes */
+  .pb { min-height: calc(100svh - var(--m-chrome)); display: flex; flex-direction: column; justify-content: center; }
+  .pb .bn-grid { padding-top: 16px; gap: 16px; }
+  .pb .crumbs { margin-bottom: 10px; }
+  .pb .bn-eyebrow { margin-bottom: 12px; }
+  .pb h1 { margin-bottom: 10px; }
+  .pb .bn-lead { font-size: 14px; line-height: 1.6; margin-bottom: 16px; }
+  .pb .bn-actions { flex-wrap: nowrap; gap: 16px; }
+  .pb .bn-actions .btn { flex: 0 1 auto; height: 48px; padding: 0 20px; font-size: 11px; letter-spacing: 0.12em; }
+  .pb .bn-actions .link-line { margin: 0; font-size: 11px; letter-spacing: 0.12em; white-space: nowrap; }
+  .pb .bn-stats { margin-top: 16px; }
+  .pb .bn-stage { height: 190px; }
+  .pb .bn-arch { width: 50%; right: 4%; outline-offset: 5px; }
+  .pb .bn-disc { width: 38%; left: 4%; border-width: 4px; }
+  .pb .bn-badge { display: none; }
+  .pb .bn-price { max-width: 180px; bottom: 0; padding: 6px 6px 6px 12px; border-radius: 12px; }
+  .pb .bn-price b { font-size: 14px; }
+  .pb-nav { padding-top: 12px; padding-bottom: 14px; }
+
+  /* Rows that used to scroll sideways now wrap, so every item is visible */
+  .pb-links { flex-wrap: wrap; overflow: visible; gap: 8px; }
+  .pb-links > a, .pb-links > span { font-size: 11.5px; padding: 7px 12px; }
+  .subnav .container { flex-wrap: wrap; justify-content: center; overflow: visible; gap: 0 2px; padding-top: 6px; padding-bottom: 6px; }
+  .subnav a { padding: 7px 10px; font-size: 10.5px; letter-spacing: 0.12em; }
+  .shop-tabs { flex-wrap: wrap; overflow: visible; }
+  .pills { flex-wrap: wrap; overflow: visible; padding-bottom: 0; }
+  .pdp-tabs { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; overflow: visible; }
+  .pdp-tabs button { padding: 0 4px; font-size: 10.5px; letter-spacing: 0.08em; white-space: normal; text-align: center; line-height: 1.2; }
+}
+@media (max-width: 720px) {
+  /* Info-only chips under a hero repeat content further down the page; drop them on phones */
+  .pb-nav:has(.pb-links > span) { display: none; }
+  /* Terms / Privacy switch: a clean two-option toggle on one line */
+  .policy-switch { display: flex; flex-wrap: nowrap; width: 100%; }
+  .policy-switch a { flex: 1 1 0; text-align: center; padding: 11px 6px; font-size: 10.5px; letter-spacing: 0.1em; white-space: nowrap; }
+}
+/* Shorter phones (e.g. 360×740): tighten heroes so they still fit one screen */
+@media (max-width: 720px) and (max-height: 780px) {
+  .pb .bn-grid { padding-top: 12px; gap: 12px; }
+  .pb .crumbs { margin-bottom: 6px; }
+  .pb .bn-eyebrow { margin-bottom: 8px; }
+  .pb .bn-lead { margin-bottom: 12px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .pb .bn-actions .btn { height: 44px; }
+  .pb .bn-stats { margin-top: 12px; }
+  .pb .bn-stage { height: 150px; }
+  .policy-hero { padding-top: 24px; padding-bottom: 24px; }
+}
+@media (max-width: 720px) {
+  .pb .bn-actions { flex-wrap: wrap; gap: 10px 14px; }
+  .pb .bn-actions .btn { padding: 0 16px; font-size: 10.5px; letter-spacing: 0.08em; }
+  .pb .bn-actions .link-line { font-size: 10.5px; letter-spacing: 0.08em; }
+}
+.bn-stats b { white-space: nowrap; }
+@media (max-width: 720px) {
+  .pb .bn-stats li { padding-right: 12px; }
+  .pb .bn-stats li + li { padding-left: 12px; }
+}
+@media (max-width: 380px) {
+  .pb .bn-stats b { font-size: 20px; }
+  .pb .bn-stats span { letter-spacing: 0.04em; }
+}
+@media (max-width: 720px) and (max-height: 780px) {
+  .pb .bn-stage { height: 128px; }
+}
+
+/* About page rhythm — less empty space between sections */
+.about .section { padding: clamp(28px, 3.4vw, 44px) 0; }
+.about .section-tight { padding: clamp(20px, 2.4vw, 32px) 0; }
+.about .about-promise { padding-bottom: clamp(28px, 3.4vw, 44px) !important; }
+@media (max-width: 720px) {
+  #main.about .section, .about .section { padding-top: 28px; padding-bottom: 28px; }
+}

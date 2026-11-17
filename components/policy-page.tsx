@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { ArrowUpRight, CalendarDays, Clock, Mail, Phone } from 'lucide-react';
 import PolicyNavigation from './policy-navigation';
+import { HeroBackdrop } from './page-banner';
+import { Wave } from './aquatic-fx';
 
 export type PolicySection = { id: string; title: string; paragraphs: string[] };
 
@@ -9,18 +11,20 @@ export default function PolicyPage({ title, intro, sections }: { title: string; 
   const minutes = Math.max(1, Math.ceil(sections.flatMap((s) => s.paragraphs).join(' ').split(/\s+/).length / 200));
   return (
     <main id="main">
-      <section className="policy-hero">
-        <div className="container">
-          <nav className="crumbs crumbs-dark" aria-label="Breadcrumb"><Link href="/">Home</Link><span>/</span><span>{title}</span></nav>
-          <p className="eyebrow"><span className="dot" />Prakruthi Aqua · Built on trust</p>
-          <h1>{privacy ? <>Your privacy. <em>Our responsibility.</em></> : <>Clear terms. <em>Confident choices.</em></>}</h1>
-          <p className="page-banner-lead">{intro}</p>
+      <section className="ph ph-compact policy-hero">
+        <HeroBackdrop word={privacy ? 'Privacy' : 'Terms'} />
+        <div className="container ph-compact-inner">
+          <nav className="ph-crumbs" aria-label="Breadcrumb"><Link href="/">Home</Link><span>/</span><span>{title}</span></nav>
+          <p className="ph-eyebrow"><i aria-hidden="true" />Prakruthi Aqua · Built on trust</p>
+          <h1 className="ph-title">{privacy ? <>Your privacy. <em>Our responsibility.</em></> : <>Clear terms. <em>Confident choices.</em></>}</h1>
+          <p className="ph-lead">{intro}</p>
           <div className="policy-meta"><span><CalendarDays size={14} /> Updated 9 November 2026</span><span><Clock size={14} /> {minutes} min read</span></div>
           <div className="policy-switch">
             <Link href="/terms-and-conditions/" aria-current={!privacy ? 'page' : undefined}>Terms &amp; Conditions</Link>
             <Link href="/privacy-policy/" aria-current={privacy ? 'page' : undefined}>Privacy Policy</Link>
           </div>
         </div>
+        <Wave className="ph-wave" />
       </section>
       <div className="container policy-layout">
         <PolicyNavigation sections={sections.map(({ id, title }) => ({ id, title }))} />
