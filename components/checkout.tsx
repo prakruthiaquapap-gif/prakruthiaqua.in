@@ -169,7 +169,7 @@ export default function Checkout() {
         <p className="confirm-number">{confirmation.number}</p>
         {confirmation.paid && <p className="pay-paid"><CheckCircle2 size={16} /> {money(confirmation.total)} paid securely via Razorpay</p>}
         <p className="muted">{demo ? 'This is a preview order. It is not sent to the business.' : confirmation.paid ? 'We’ve received your payment. Our team will now pack your order in Bengaluru and share dispatch details with you.' : 'Our team will confirm availability, shipping charges and payment instructions using the contact details you provided. No payment has been collected.'}</p>
-        <Link href="/shop/" className="btn btn-dark btn-lg">Continue shopping <ArrowRight size={16} /></Link>
+        <div className="checkout-gate-actions">{!demo && <Link href="/orders/" className="btn btn-dark btn-lg">View my orders <ArrowRight size={16} /></Link>}<Link href="/shop/" className="btn btn-outline btn-lg">Continue shopping</Link></div>
       </div></div>
     </main>
   );

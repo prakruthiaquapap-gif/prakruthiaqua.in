@@ -24,3 +24,15 @@ export async function POST(req: Request) {
     return Response.json(data);
   } catch (e) { return errorResponse(e); }
 }
+
+// GET /api/orders/ — the signed-in customer's own orders, newest first.
+export async function GET(req: Request) {
+  try {
+    const customer = await requireCustomer(req);
+    const { data, error } = await adminDb().from('prakruthi_orders')
+      .select('id, order_number, created_at, customer_name, email, phone, address, notes, status, payment_status, payment_method, payment_mode, paid_at, razorpay_payment_id, total, items')
+      .eq('customer_id', customer.id).order('created_at', { ascending: false }).limit(100);
+    if (error) throw new ServerError('Unable to load your orders right now.', 500);
+    return Response.json({ orders: data ?? [] }, { headers: { 'Cache-Control': 'no-store' } });
+  } catch (e) { return errorResponse(e); }
+}

@@ -10,9 +10,9 @@ import { DealerPortalCard } from './dealer-portal';
 export type CustomerUser = { id: string; name: string; email: string; phone: string };
 type Mode = 'signin' | 'register' | 'reset';
 type OpenOptions = { mode?: 'signin' | 'register'; next?: string; reason?: string };
-type AuthContextValue = { open: (opts?: OpenOptions | React.SyntheticEvent) => void; user: CustomerUser | null; ready: boolean; requireAuth: (href: string) => boolean };
+type AuthContextValue = { open: (opts?: OpenOptions | React.SyntheticEvent) => void; user: CustomerUser | null; ready: boolean; requireAuth: (href: string) => boolean; signOut: () => Promise<void> };
 const NEXT_KEY = 'prakruthi-auth-next';
-const AuthPopupContext = createContext<AuthContextValue>({ open: () => {}, user: null, ready: false, requireAuth: () => true });
+const AuthPopupContext = createContext<AuthContextValue>({ open: () => {}, user: null, ready: false, requireAuth: () => true, signOut: async () => {} });
 export const useAuthPopup = () => useContext(AuthPopupContext);
 
 async function api<T>(path: string, body?: Record<string, unknown>): Promise<T> {
@@ -115,12 +115,12 @@ export function AuthPopupProvider({ children }: { children: React.ReactNode }) {
 
   async function signOut() {
     setBusy(true);
-    try { await api('/api/auth/logout/', {}); setUser(null); setMessage(''); }
+    try { await api('/api/auth/logout/', {}); setUser(null); setMessage(''); setError(''); close(); window.location.replace('/'); }
     catch { setError('Unable to sign out. Please try again.'); }
     finally { setBusy(false); }
   }
 
-  return <AuthPopupContext.Provider value={{ open, user, ready, requireAuth }}>{children}{visible && (
+  return <AuthPopupContext.Provider value={{ open, user, ready, requireAuth, signOut }}>{children}{visible && (
     <div className="auth-popup-overlay" onClick={e => { if (e.target === e.currentTarget) close(); }}>
       <div className="auth-popup" role="dialog" aria-modal="true" aria-labelledby="auth-popup-title" ref={panel} tabIndex={-1}>
         <button className="auth-popup-close icon-btn" aria-label="Close account popup" onClick={close}><X size={21} /></button>
@@ -163,7 +163,6 @@ export function AuthPopupProvider({ children }: { children: React.ReactNode }) {
                 {mode === 'register' && <label>Phone number <small>(optional)</small><input name="phone" type="tel" autoComplete="tel" maxLength={30} placeholder="+91 98765 43210" /></label>}
                 <label>Password<span className="auth-popup-password"><input name="password" type={showPassword ? 'text' : 'password'} autoComplete={mode === 'register' ? 'new-password' : 'current-password'} minLength={mode === 'register' ? 8 : 1} required placeholder={mode === 'register' ? 'At least 8 characters' : 'Enter your password'} /><button type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button></span></label>
                 {mode === 'register' && <label>Confirm password<input name="confirmPassword" type={showPassword ? 'text' : 'password'} autoComplete="new-password" minLength={8} required placeholder="Repeat your password" /></label>}
-                {mode === 'signin' && <button type="button" className="auth-popup-help" onClick={() => switchMode('reset')}>Forgot password?</button>}
                 <button className="btn btn-dark btn-block" type="submit">{busy ? 'Please wait…' : mode === 'register' ? 'Create account' : 'Sign In'}<ArrowRight size={16} /></button>
               </fieldset>
             </form>

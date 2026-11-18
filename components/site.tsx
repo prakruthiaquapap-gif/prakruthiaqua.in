@@ -1,5 +1,6 @@
 'use client';
 import { useAuthPopup } from './auth-popup';
+import AccountMenu from './account-menu';
 import { businessAddress } from '@/lib/business-info';
 import ShopDropdown, { MobileProductRanges } from './shop-dropdown';
 import { WishlistButton, WishlistLink } from './wishlist';
@@ -40,7 +41,7 @@ export function Logo({ light = false }: { light?: boolean }) {
 }
 
 export function SiteProvider({ children }: { children: React.ReactNode }) {
-  const { open: openAccount, user, requireAuth } = useAuthPopup();
+  const { open: openAccount, user, requireAuth, signOut } = useAuthPopup();
   const accountName = String(user?.name || user?.email || '').trim();
   const firstName = accountName.split(/[\s@]/)[0] || 'Account';
   const { products } = useStorefront();
@@ -125,11 +126,7 @@ export function SiteProvider({ children }: { children: React.ReactNode }) {
               <Link className="header-cta" href="/business-enquiry/">Business Enquiry <ArrowUpRight size={14} /></Link>
               <button className="icon-btn" onClick={() => setSearch(true)} aria-label="Search products"><Search size={19} /></button>
               <WishlistLink />
-              <button className={`header-account${user ? ' is-signed-in' : ''}`} onClick={() => openAccount()} aria-label={user ? `Your account, signed in as ${accountName}` : 'Sign in or sign up'}>
-                {user
-                  ? <><span className="header-avatar" aria-hidden="true">{firstName[0]?.toUpperCase()}</span><span className="header-account-text">{firstName}</span></>
-                  : <><UserRound size={17} /><span className="header-account-text">Sign in <i>/</i> Sign up</span></>}
-              </button>
+              <AccountMenu />
               <button className="bag-btn" onClick={() => setDrawer(true)} aria-label={`Open your cart, ${count} items`}>
                 <ShoppingBag size={17} />
                 <span>{count}</span>
@@ -192,7 +189,7 @@ export function SiteProvider({ children }: { children: React.ReactNode }) {
                 <li><Link href="/contact/">Contact</Link></li>
                 <li><Link href="/business-enquiry/">Business enquiry</Link></li>
                 <li><a href="https://dealers.prakruthiaqua.in/" target="_blank" rel="noopener noreferrer">Become a dealer <ArrowUpRight size={12} /></a></li>
-                <li><button onClick={() => openAccount()}>{user ? 'My account' : 'Sign in / Sign up'}</button></li>
+                {user ? <li><Link href="/orders/">My orders</Link></li> : <li><button onClick={() => openAccount()}>Sign in / Sign up</button></li>}
                 <li><Link href="/wishlist/">Wishlist</Link></li>
               </ul>
             </div>
@@ -233,8 +230,8 @@ export function SiteProvider({ children }: { children: React.ReactNode }) {
               <button className="icon-btn" onClick={() => setMenu(false)} aria-label="Close menu"><X size={22} /></button>
             </div>
             <nav className="mobile-menu-links">
-              {[...nav, ['/business-enquiry/', 'Business Enquiry'], ['/wishlist/', 'Wishlist'], ['/account/', user ? 'My account' : 'Sign in / Sign up']].map(([url, label]) => (
-                <Link key={url} href={url} onClick={(e) => { setMenu(false); if (url === '/account/') { e.preventDefault(); openAccount(); } }} aria-current={path === url ? 'page' : undefined}>
+              {[...nav, ['/business-enquiry/', 'Business Enquiry'], ['/wishlist/', 'Wishlist'], ...(user ? [['/orders/', 'My orders']] : []), ['/account/', user ? 'Logout' : 'Sign in / Sign up']].map(([url, label]) => (
+                <Link key={url} href={url} onClick={(e) => { setMenu(false); if (url === '/account/') { e.preventDefault(); if (user) void signOut(); else openAccount(); } }} aria-current={path === url ? 'page' : undefined}>
                   {label} <ArrowUpRight size={18} />
                 </Link>
               ))}
