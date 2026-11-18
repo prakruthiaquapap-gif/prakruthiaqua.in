@@ -1,5 +1,6 @@
 'use client';
 import { useAuthPopup } from './auth-popup';
+import { businessAddress } from '@/lib/business-info';
 import ShopDropdown, { MobileProductRanges } from './shop-dropdown';
 import { WishlistButton, WishlistLink } from './wishlist';
 
@@ -39,7 +40,9 @@ export function Logo({ light = false }: { light?: boolean }) {
 }
 
 export function SiteProvider({ children }: { children: React.ReactNode }) {
-  const { open: openAccount } = useAuthPopup();
+  const { open: openAccount, user, requireAuth } = useAuthPopup();
+  const accountName = String(user?.user_metadata?.full_name || user?.email || '').trim();
+  const firstName = accountName.split(/[\s@]/)[0] || 'Account';
   const { products } = useStorefront();
   const [bag, setBag] = useState<Item[]>([]);
   const [ready, setReady] = useState(false);
@@ -122,7 +125,11 @@ export function SiteProvider({ children }: { children: React.ReactNode }) {
               <Link className="header-cta" href="/business-enquiry/">Business Enquiry <ArrowUpRight size={14} /></Link>
               <button className="icon-btn" onClick={() => setSearch(true)} aria-label="Search products"><Search size={19} /></button>
               <WishlistLink />
-              <button className="icon-btn hide-sm" onClick={openAccount} aria-label="Account"><UserRound size={19} /></button>
+              <button className={`header-account${user ? ' is-signed-in' : ''}`} onClick={() => openAccount()} aria-label={user ? `Your account, signed in as ${accountName}` : 'Sign in or sign up'}>
+                {user
+                  ? <><span className="header-avatar" aria-hidden="true">{firstName[0]?.toUpperCase()}</span><span className="header-account-text">{firstName}</span></>
+                  : <><UserRound size={17} /><span className="header-account-text">Sign in <i>/</i> Sign up</span></>}
+              </button>
               <button className="bag-btn" onClick={() => setDrawer(true)} aria-label={`Open your cart, ${count} items`}>
                 <ShoppingBag size={17} />
                 <span>{count}</span>
@@ -165,7 +172,7 @@ export function SiteProvider({ children }: { children: React.ReactNode }) {
               <div className="footer-contact">
                 <a href="tel:+918904373735"><PhoneCall size={15} /> +91 89043 73735</a>
                 <a href="mailto:info@prakruthiaqua.in"><Mail size={15} /> info@prakruthiaqua.in</a>
-                <span><MapPin size={15} /> Yelahanka New Town, Bengaluru</span>
+                <span><MapPin size={15} /> {businessAddress}</span>
               </div>
             </div>
             <div>
@@ -185,7 +192,7 @@ export function SiteProvider({ children }: { children: React.ReactNode }) {
                 <li><Link href="/contact/">Contact</Link></li>
                 <li><Link href="/business-enquiry/">Business enquiry</Link></li>
                 <li><a href="https://dealers.prakruthiaqua.in/" target="_blank" rel="noopener noreferrer">Become a dealer <ArrowUpRight size={12} /></a></li>
-                <li><button onClick={openAccount}>Account</button></li>
+                <li><button onClick={() => openAccount()}>{user ? 'My account' : 'Sign in / Sign up'}</button></li>
                 <li><Link href="/wishlist/">Wishlist</Link></li>
               </ul>
             </div>
@@ -226,7 +233,7 @@ export function SiteProvider({ children }: { children: React.ReactNode }) {
               <button className="icon-btn" onClick={() => setMenu(false)} aria-label="Close menu"><X size={22} /></button>
             </div>
             <nav className="mobile-menu-links">
-              {[...nav, ['/business-enquiry/', 'Business Enquiry'], ['/wishlist/', 'Wishlist'], ['/account/', 'Account']].map(([url, label]) => (
+              {[...nav, ['/business-enquiry/', 'Business Enquiry'], ['/wishlist/', 'Wishlist'], ['/account/', user ? 'My account' : 'Sign in / Sign up']].map(([url, label]) => (
                 <Link key={url} href={url} onClick={(e) => { setMenu(false); if (url === '/account/') { e.preventDefault(); openAccount(); } }} aria-current={path === url ? 'page' : undefined}>
                   {label} <ArrowUpRight size={18} />
                 </Link>
@@ -306,7 +313,7 @@ export function SiteProvider({ children }: { children: React.ReactNode }) {
                 <div className="cart-foot">
                   <div className="cart-total"><span>Subtotal</span><b>{money(total)}</b></div>
                   <p>Shipping and final availability are confirmed by our team before payment.</p>
-                  <a href="/checkout/" onClick={() => setDrawer(false)} className="btn btn-dark btn-block">Checkout <ArrowRight size={16} /></a>
+                  <a href="/checkout/" onClick={(e) => { setDrawer(false); if (!requireAuth('/checkout/')) e.preventDefault(); }} className="btn btn-dark btn-block">Checkout <ArrowRight size={16} /></a>
                   <a
                     href={`https://wa.me/918904373735?text=${encodeURIComponent('Hi Prakruthi Aqua! I would like to enquire about:\n' + visibleBag.map((i) => `${products.find((p) => p.slug === i.slug)!.name} × ${i.quantity}`).join('\n'))}`}
                     target="_blank" rel="noreferrer" className="btn btn-outline btn-block"

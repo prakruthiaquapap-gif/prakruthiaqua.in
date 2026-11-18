@@ -6,27 +6,58 @@ import { ArrowRight, CheckCircle2, Eye, EyeOff, Leaf, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { DealerPortalCard } from './dealer-portal';
 
-const AuthPopupContext = createContext({ open: () => {} });
+type OpenOptions = { mode?: 'signin' | 'register'; next?: string; reason?: string };
+type AuthContextValue = { open: (opts?: OpenOptions | React.SyntheticEvent) => void; user: User | null; ready: boolean; requireAuth: (href: string) => boolean };
+const NEXT_KEY = 'prakruthi-auth-next';
+const AuthPopupContext = createContext<AuthContextValue>({ open: () => {}, user: null, ready: false, requireAuth: () => true });
 export const useAuthPopup = () => useContext(AuthPopupContext);
 
 export function AuthPopupProvider({ children }: { children: React.ReactNode }) {
   const [visible, setVisible] = useState(false);
   const [mode, setMode] = useState<'signin' | 'register' | 'reset'>('signin');
   const [user, setUser] = useState<User | null>(null);
+  const [ready, setReady] = useState(!supabase);
+  const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const panel = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLElement | null>(null);
-  const open = () => { trigger.current = document.activeElement as HTMLElement; setMode('signin'); setMessage(''); setError(''); setShowPassword(false); setVisible(true); };
-  const close = () => { setVisible(false); trigger.current?.focus(); };
+  const awaitingEmail = useRef(false);
+  const open = (input?: OpenOptions | React.SyntheticEvent) => {
+    const opts = input && !('nativeEvent' in input) ? input : undefined;
+    awaitingEmail.current = false;
+    trigger.current = document.activeElement as HTMLElement;
+    try { if (opts?.next) localStorage.setItem(NEXT_KEY, opts.next); } catch {}
+    setReason(opts?.reason || (opts?.next?.startsWith('/checkout') ? 'Sign in or create an account to place your order.' : ''));
+    setMode(opts?.mode || 'signin'); setMessage(''); setError(''); setShowPassword(false); setVisible(true);
+  };
+  const requireAuth = (href: string) => {
+    if (!supabase || user) return true;
+    open({ mode: 'signin', next: href });
+    return false;
+  };
+  // After sign-in or registration, continue to the page that asked for an account (e.g. checkout).
+  const continueNext = () => {
+    let next = '';
+    try { next = localStorage.getItem(NEXT_KEY) || ''; localStorage.removeItem(NEXT_KEY); } catch {}
+    if (next.startsWith('/') && !next.startsWith('//')) { setVisible(false); window.location.assign(next); return true; }
+    return false;
+  };
+  const close = () => {
+    if (!awaitingEmail.current) { try { localStorage.removeItem(NEXT_KEY); } catch {} }
+    setVisible(false); trigger.current?.focus();
+  };
 
   useEffect(() => {
     if (!supabase) return;
     let active = true;
-    supabase.auth.getUser().then(({ data }) => { if (active) setUser(data.user); });
-    const { data } = supabase.auth.onAuthStateChange((_event, session) => setUser(session?.user ?? null));
+    supabase.auth.getUser().then(({ data }) => { if (!active) return; setUser(data.user); setReady(true); if (data.user) continueNext(); });
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null); setReady(true);
+      if (event === 'SIGNED_IN' && session?.user) continueNext();
+    });
     return () => { active = false; data.subscription.unsubscribe(); };
   }, []);
 
@@ -60,7 +91,9 @@ export function AuthPopupProvider({ children }: { children: React.ReactNode }) {
       if (mode === 'register') {
         const { data: result, error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: String(data.get('name') || '').trim() }, emailRedirectTo: location.origin + '/account/' } });
         if (error) throw error;
-        setMessage(result.session ? 'Your account is ready. Welcome to Prakruthi Aqua.' : 'Check your email for the confirmation link. If you already have an account, use Sign In.');
+        if (result.session && continueNext()) return;
+        if (!result.session) awaitingEmail.current = true;
+        setMessage(result.session ? 'Your account is ready. Welcome to Prakruthi Aqua.' : 'Check your email for the confirmation link. After confirming, you’ll come straight back here.');
       } else if (mode === 'reset') {
         // Email link uses the existing account callback, without exposing a password reset token.
         const { error } = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: false, emailRedirectTo: location.origin + '/account/' } });
@@ -69,13 +102,18 @@ export function AuthPopupProvider({ children }: { children: React.ReactNode }) {
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        if (continueNext()) return;
         setMessage('You’re signed in. Welcome back.');
       }
-    } catch { setError(mode === 'signin' ? 'Unable to sign in. Check your email and password, and confirm your email if needed.' : 'Unable to complete your request. Please try again shortly.'); }
+    } catch (err) {
+      const friendly = authErrorMessage(err, mode);
+      setError(friendly.text);
+      if (friendly.switchTo) setMode(friendly.switchTo);
+    }
     finally { setBusy(false); }
   }
 
-  return <AuthPopupContext.Provider value={{ open }}>{children}{visible && (
+  return <AuthPopupContext.Provider value={{ open, user, ready, requireAuth }}>{children}{visible && (
     <div className="auth-popup-overlay" onClick={e => { if (e.target === e.currentTarget) close(); }}>
       <div className="auth-popup" role="dialog" aria-modal="true" aria-labelledby="auth-popup-title" ref={panel} tabIndex={-1}>
         <button className="auth-popup-close icon-btn" aria-label="Close account popup" onClick={close}><X size={21} /></button>
@@ -84,8 +122,9 @@ export function AuthPopupProvider({ children }: { children: React.ReactNode }) {
           <div><img className="auth-popup-logo" src="/images/prakruthi-icon.svg" alt="Prakruthi Aqua" /><span className="eyebrow">A little care. A world of life.</span><h2>Your aquatic<br /><em>journey starts here.</em></h2>{!user && mode !== 'reset' && <DealerPortalCard compact />}<span className="auth-popup-note"><Leaf size={16} /> Thoughtfully made in Bengaluru</span></div>
         </aside>
         <div className="auth-popup-main">
-          {user ? <div className="auth-popup-welcome"><CheckCircle2 size={38} /><p className="eyebrow">Your account</p><h1 id="auth-popup-title">Welcome back.</h1><p className="muted">{user.user_metadata.full_name || user.email}</p><p className="fine">Signed in as {user.email}</p><button className="btn btn-leaf btn-block" onClick={close}>Continue shopping <ArrowRight size={16} /></button><button className="btn btn-outline btn-block" disabled={busy} onClick={async () => { if (!supabase) return; setBusy(true); const { error } = await supabase.auth.signOut(); setBusy(false); if (error) setError('Unable to sign out. Please try again.'); else { setUser(null); setMessage(''); } }}>Sign out</button>{error && <p role="alert" className="auth-popup-error">{error}</p>}</div> : <>
+          {user ? <div className="auth-popup-welcome"><CheckCircle2 size={38} /><p className="eyebrow">Your account</p><h1 id="auth-popup-title">Welcome back.</h1><p className="muted">{user.user_metadata.full_name || user.email}</p><p className="fine">Signed in as {user.email}</p><button className="btn btn-leaf btn-block" onClick={close}>Continue shopping <ArrowRight size={16} /></button><button className="btn btn-outline btn-block" disabled={busy} onClick={async () => { if (!supabase) return; setBusy(true); const { error } = await supabase.auth.signOut({ scope: 'local' }); setBusy(false); if (error) setError('Unable to sign out. Please try again.'); else { setUser(null); setMessage(''); } }}>Sign out</button>{error && <p role="alert" className="auth-popup-error">{error}</p>}</div> : <>
             <p className="eyebrow"><span className="dot" /> Prakruthi Aqua members</p>
+            {reason && mode !== 'reset' && <p className="auth-popup-reason">{reason}</p>}
             <h1 id="auth-popup-title">{mode === 'register' ? 'Create an account.' : mode === 'reset' ? 'Email sign-in link.' : 'Welcome back.'}</h1>
             <p className="muted">{mode === 'register' ? 'Join our community of aquarium lovers.' : mode === 'reset' ? 'Get a secure link to sign in without your password.' : 'Sign in to your Prakruthi Aqua account.'}</p>
             {mode !== 'reset' && <div className="auth-popup-dealer-mobile"><DealerPortalCard compact /></div>}
@@ -108,4 +147,31 @@ export function AuthPopupProvider({ children }: { children: React.ReactNode }) {
       </div>
     </div>
   )}</AuthPopupContext.Provider>;
+}
+
+// Turn Supabase auth errors into clear, actionable messages instead of a generic failure.
+function authErrorMessage(err: unknown, mode: 'signin' | 'register' | 'reset'): { text: string; switchTo?: 'signin' } {
+  const e = (err ?? {}) as { code?: string; message?: string; status?: number };
+  const code = e.code || '';
+  const msg = (e.message || '').toLowerCase();
+  if (code === 'user_already_exists' || code === 'email_exists' || msg.includes('already registered') || msg.includes('already been registered'))
+    return { text: 'An account with this email already exists. Please sign in instead.', switchTo: 'signin' };
+  if (code === 'weak_password' || msg.includes('password should') || msg.includes('weak password'))
+    return { text: e.message ? `Please choose a stronger password. ${e.message}` : 'Please choose a stronger password (at least 8 characters, mixing letters and numbers).' };
+  if (code === 'email_address_invalid' || msg.includes('email address') && msg.includes('invalid'))
+    return { text: 'This email address was not accepted. Please use your real, active email address (test addresses like test@test.com are blocked).' };
+  if (code === 'signup_disabled' || msg.includes('signups not allowed'))
+    return { text: 'New account registration is currently turned off. Please contact us to place your order.' };
+  if (code.startsWith('over_') || e.status === 429 || msg.includes('rate limit'))
+    return { text: 'Too many attempts in a short time. Please wait a few minutes and try again.' };
+  if (msg.includes('database error'))
+    return { text: 'Our account system could not save your details (database error). Please contact us — our team needs to fix the account setup.' };
+  if (code === 'invalid_credentials' || msg.includes('invalid login credentials'))
+    return { text: 'Incorrect email or password. Please try again, or use “Forgot password” to get a sign-in link.' };
+  if (code === 'email_not_confirmed' || msg.includes('email not confirmed'))
+    return { text: 'Please confirm your email first — check your inbox for the confirmation link.' };
+  if (msg.includes('failed to fetch') || msg.includes('network'))
+    return { text: 'We couldn’t reach the account service. Check your internet connection and try again.' };
+  const fallback = mode === 'signin' ? 'Unable to sign in.' : 'Unable to create your account.';
+  return { text: e.message ? `${fallback} ${e.message}` : `${fallback} Please try again shortly.` };
 }

@@ -6,6 +6,7 @@ import { type Product, money, description } from '@/lib/catalog';
 import { useBag } from './site';
 import { WishlistButton } from './wishlist';
 import { useStorefront } from './storefront-data';
+import { useAuthPopup } from './auth-popup';
 
 const tabs = [['overview', 'Details'], ['directions', 'Care & directions'], ['ordering', 'Ordering & delivery']] as const;
 
@@ -13,6 +14,7 @@ export default function ProductDetail({ product: initialProduct }: { product: Pr
   const { products, loading } = useStorefront();
   const p = products.find((item) => item.slug === initialProduct.slug) || initialProduct;
   const { add } = useBag();
+  const { requireAuth } = useAuthPopup();
   const [quantity, setQuantity] = useState(1), [zoom, setZoom] = useState(false), [tab, setTab] = useState<string>('overview');
 
   useEffect(() => {
@@ -64,7 +66,7 @@ export default function ProductDetail({ product: initialProduct }: { product: Pr
               <button className="btn btn-dark btn-grow" onClick={addSelected}><ShoppingBag size={17} /> Add to cart</button>
               <WishlistButton product={p} detail />
             </div>
-            <a className="btn btn-leaf btn-block btn-lg" href={`/checkout/?product=${encodeURIComponent(p.slug)}&quantity=${quantity}`}>Order now <ArrowUpRight size={18} /></a>
+            <a className="btn btn-leaf btn-block btn-lg" href={`/checkout/?product=${encodeURIComponent(p.slug)}&quantity=${quantity}`} onClick={(e) => { if (!requireAuth(`/checkout/?product=${encodeURIComponent(p.slug)}&quantity=${quantity}`)) e.preventDefault(); }}>Order now <ArrowUpRight size={18} /></a>
             <p className="fine">Submit an order request and our team will confirm. No online payment is collected here.</p>
           </div>
 

@@ -1,0 +1,36 @@
+import assert from 'node:assert/strict';
+import { createClient } from '@supabase/supabase-js';
+import { storeAuthOptions } from '../lib/supabase-auth-options.ts';
+const url='https://test-project.supabase.co';
+const values=new Map();
+const storage={getItem:k=>values.get(k)??null,setItem:(k,v)=>values.set(k,v),removeItem:k=>values.delete(k)};
+const requests=[];
+const uid='11111111-1111-4111-8111-111111111111';
+const jwt=Buffer.from(JSON.stringify({alg:'HS256',typ:'JWT'})).toString('base64url')+'.'+Buffer.from(JSON.stringify({sub:uid,role:'authenticated',exp:Math.floor(Date.now()/1000)+3600})).toString('base64url')+'.test';
+const fetcher=async (input,init)=>{
+ const endpoint=String(input);requests.push(endpoint);
+ if(endpoint.includes('/logout'))return new Response(null,{status:204});
+ const email=JSON.parse(init.body).email;
+ return new Response(JSON.stringify({access_token:jwt,refresh_token:'test-'+email,expires_in:3600,token_type:'bearer',user:{id:uid,email,aud:'authenticated',user_metadata:{}}}),{status:200,headers:{'Content-Type':'application/json'}});
+};
+function client(audience){return createClient(url,'test-anon-key',{auth:{...storeAuthOptions(url,audience),storage,autoRefreshToken:false},global:{fetch:fetcher}})}
+const admin=client('admin'),customer=client('customer');
+const signed=await admin.auth.signInWithPassword({email:'admin@example.com',password:'test-only'});
+assert.equal(signed.error,null);
+assert.equal((await customer.auth.getSession()).data.session,null,'Admin sign-in must not sign in the storefront');
+assert.notEqual(storeAuthOptions(url,'admin').storageKey,storeAuthOptions(url,'customer').storageKey);
+assert.equal(storeAuthOptions(url,'admin').detectSessionInUrl,false);
+const refreshedAdmin=client('admin');
+assert.equal((await refreshedAdmin.auth.getSession()).data.session.user.email,'admin@example.com','Admin refresh restores only admin session');
+await customer.auth.signInWithPassword({email:'customer@example.com',password:'test-only'});
+assert.equal((await admin.auth.getSession()).data.session.user.email,'admin@example.com');
+await admin.auth.signOut({scope:'local'});
+assert(requests.some(path=>path.includes('scope=local')));
+assert.equal((await customer.auth.getSession()).data.session.user.email,'customer@example.com','Admin logout must preserve customer login');
+const adminAgain=client('admin');
+assert.equal((await adminAgain.auth.getSession()).data.session,null,'Signed-out admin does not inherit customer session');
+await admin.auth.signInWithPassword({email:'admin@example.com',password:'test-only'});
+await customer.auth.signOut({scope:'local'});
+assert.equal((await admin.auth.getSession()).data.session.user.email,'admin@example.com','Customer logout must preserve admin login');
+await admin.auth.signOut({scope:'local'});
+console.log('Passed admin/customer session isolation, admin refresh, callback isolation and independent logout checks using mocked auth.');

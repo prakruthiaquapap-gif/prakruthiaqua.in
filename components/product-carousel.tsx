@@ -20,6 +20,8 @@ export function Carousel({ products, label, fiveColumns = false }: { products: P
   }, []);
   useEffect(() => {
     if (!auto || hover || focused || products.length < 2) return;
+    let animation = 0;
+    let restoreSnap: (() => void) | undefined;
     const timer = window.setInterval(() => {
       const el = track.current;
       if (!el || document.hidden || Date.now() < holdUntil.current) return;
@@ -29,9 +31,23 @@ export function Carousel({ products, label, fiveColumns = false }: { products: P
       if (!card || el.scrollWidth <= el.clientWidth + 2) return;
       const gap = parseFloat(getComputedStyle(el).columnGap) || 0;
       const end = el.scrollLeft >= el.scrollWidth - el.clientWidth - 3;
-      el.scrollTo({ left: end ? 0 : el.scrollLeft + card.offsetWidth + gap, behavior: 'smooth' });
-    }, 3500);
-    return () => window.clearInterval(timer);
+      if (end) { el.scrollTo({ left: 0, behavior: 'instant' }); return; }
+      const start = el.scrollLeft;
+      const target = Math.min(start + card.offsetWidth + gap, el.scrollWidth - el.clientWidth);
+      const started = performance.now();
+      const snap = el.style.scrollSnapType;
+      el.style.scrollSnapType = 'none';
+      restoreSnap = () => { el.style.scrollSnapType = snap; };
+      const animate = (now: number) => {
+        const progress = Math.min((now - started) / 2000, 1);
+        const eased = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+        el.scrollLeft = start + (target - start) * eased;
+        if (progress < 1) animation = requestAnimationFrame(animate);
+        else { restoreSnap?.(); restoreSnap = undefined; }
+      };
+      animation = requestAnimationFrame(animate);
+    }, 7000);
+    return () => { window.clearInterval(timer); cancelAnimationFrame(animation); restoreSnap?.(); };
   }, [auto, hover, focused, products.length]);
   const move = (dir: number) => {
     setAuto(false);

@@ -1,9 +1,11 @@
 'use client';
 import { useState } from 'react';
+import DeliveryLocation from './delivery-location';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { ArrowRight, CheckCircle2, ShoppingBag, Lock, Check } from 'lucide-react';
+import { ArrowRight, CheckCircle2, ShoppingBag, Lock, Check, UserRound, UserPlus } from 'lucide-react';
 import { useStorefront } from './storefront-data';
+import { useAuthPopup } from './auth-popup';
 import { useBag } from './site';
 import { money } from '@/lib/catalog';
 import { supabase } from '@/lib/supabase';
@@ -13,6 +15,8 @@ export default function Checkout() {
   const params = useSearchParams();
   const { products, loading, demo } = useStorefront();
   const { items, clear } = useBag();
+  const { user, ready, open: openAccount } = useAuthPopup();
+  const needsAccount = !!supabase && !demo;
   const [busy, setBusy] = useState(false), [error, setError] = useState(''), [confirmation, setConfirmation] = useState('');
   const direct = products.find((p) => p.slug === params.get('product'));
   const qty = Math.min(20, Math.max(1, Number(params.get('quantity')) || 1));
@@ -50,7 +54,27 @@ export default function Checkout() {
     } finally { setBusy(false); }
   }
 
-  if (loading) return <div className="loading">Loading your order…</div>;
+  if (loading || (needsAccount && !ready)) return <div className="loading">Loading your order…</div>;
+
+  if (needsAccount && !user && !confirmation) {
+    const here = typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/checkout/';
+    const count = orderItems.reduce((s, i) => s + i.quantity, 0);
+    return (
+      <main id="main" className="section section-paper">
+        <div className="container"><div className="confirm checkout-gate">
+          <span className="confirm-icon"><Lock size={30} /></span>
+          <p className="eyebrow"><span className="dot" />Secure checkout</p>
+          <h1>Sign in to <em>check out.</em></h1>
+          <p className="muted">Please sign in or create a free account to place your order request. We’ll bring you straight back here{count ? ` with your ${count} ${count === 1 ? 'item' : 'items'}` : ''}.</p>
+          <div className="checkout-gate-actions">
+            <button className="btn btn-dark btn-lg" onClick={() => openAccount({ mode: 'signin', next: here })}><UserRound size={17} /> Sign in</button>
+            <button className="btn btn-outline btn-lg" onClick={() => openAccount({ mode: 'register', next: here })}><UserPlus size={17} /> Create account</button>
+          </div>
+          {orderItems.length > 0 && <p className="fine"><ShoppingBag size={13} /> Order total so far: <b>{money(total)}</b></p>}
+        </div></div>
+      </main>
+    );
+  }
 
   if (confirmation) return (
     <main id="main" className="section section-paper">
@@ -88,10 +112,10 @@ export default function Checkout() {
           <form className="form-card" onSubmit={submit}>
             <h2>Your details</h2>
             <div className="fields">
-              <label>Full name *<input name="name" required maxLength={100} autoComplete="name" /></label>
-              <label>Email address *<input name="email" type="email" required maxLength={200} autoComplete="email" /></label>
+              <label>Full name *<input name="name" required maxLength={100} autoComplete="name" defaultValue={String(user?.user_metadata?.full_name || '')} /></label>
+              <label>Email address *<input name="email" type="email" required maxLength={200} autoComplete="email" defaultValue={user?.email || ''} /></label>
               <label>Phone number *<input name="phone" type="tel" required maxLength={30} autoComplete="tel" /></label>
-              <label className="full">Delivery address *<textarea name="address" required minLength={10} maxLength={1000} rows={3} autoComplete="street-address" /></label>
+              <DeliveryLocation />
               <label className="full">Order notes<textarea name="notes" maxLength={2000} rows={3} /></label>
               <label className="honeypot" aria-hidden="true">Website<input name="website" tabIndex={-1} autoComplete="off" /></label>
             </div>

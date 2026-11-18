@@ -69,3 +69,9 @@ Enable Email authentication in Supabase. Keep email confirmation enabled and con
 Use `supabase/full-setup.sql`. All website tables and RPCs have the `prakruthi_` prefix. Media uses `prakruthi-catalog-media` and its own policy names. The installer does not rename, drop, modify policies on, or seed existing unprefixed tables (including `products`, `categories`, dealer and subdealer tables). Existing unprefixed website installations are not automatically migrated: do not delete or rename those shared tables.
 
 Supabase Auth is shared by applications within one Supabase project. The website has a separate `prakruthi_admin_members` allowlist, so dealer admin privileges do not grant website management access. Auth provider settings, confirmation emails and user identities still belong to the shared project. Use a separate Supabase project if identity isolation is required.
+
+## Independent admin and storefront sessions
+
+Admin uses `lib/supabase-admin.ts`; customer account, storefront and checkout use `lib/supabase.ts`. Their project-specific Auth storage keys are separate. Admin email/password sign-in cannot populate the customer account popup, and customer email-link callbacks are disabled for the admin client. Both logout actions use local session scope, preserving other signed-in sessions. Existing shared sessions are not imported: sign in once in each area after deploying this change. Supabase identities and admin membership policies are unchanged.
+
+Run `node --experimental-strip-types tests/auth-isolation.mjs` for isolated-session and independent-logout checks with mocked authentication. No live credentials or auth requests are used by this test.

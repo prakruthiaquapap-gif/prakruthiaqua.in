@@ -1,9 +1,10 @@
+import { businessAddress } from '@/lib/business-info';
 import { Phone, Mail, MapPin, ArrowUpRight, Clock } from 'lucide-react';
 import ContactForm from '@/components/contact-form';
 import PageBanner from '@/components/page-banner';
 
 export const metadata = { title: 'Contact Us', description: "We're here to help with all your aquarium care needs. Contact Prakruthi Aqua in Bengaluru." };
-const mapQuery = '2nd Cross, Veera Sagar Main Road, Yelahanka New Town, Bengaluru, India';
+const mapQuery = businessAddress;
 const mapLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`;
 
 export default function Contact() {
@@ -33,7 +34,7 @@ export default function Contact() {
             <div className="contact-cards">
               <article><span className="icon-tile"><Phone size={19} /></span><div><h3>Phone</h3><a href="tel:+918904373735">+91 89043 73735</a></div></article>
               <article><span className="icon-tile"><Mail size={19} /></span><div><h3>Email</h3><a href="mailto:info@prakruthiaqua.in">info@prakruthiaqua.in</a><a href="mailto:support@prakruthiaqua.in">support@prakruthiaqua.in</a></div></article>
-              <article><span className="icon-tile"><MapPin size={19} /></span><div><h3>Address</h3><p>2nd Cross, Veera Sagar Main Road, Near Amba Bhavani Temple, Attur Layout, Chikkadinne, Yelahanka New Town, Bengaluru, India</p><a className="link-arrow" href={mapLink} target="_blank" rel="noreferrer">Get directions <ArrowUpRight size={14} /></a></div></article>
+              <article><span className="icon-tile"><MapPin size={19} /></span><div><h3>Address</h3><p>{businessAddress}</p><a className="link-arrow" href={mapLink} target="_blank" rel="noreferrer">Get directions <ArrowUpRight size={14} /></a></div></article>
               <article><span className="icon-tile"><Clock size={19} /></span><div><h3>Business hours</h3><p>Mon – Fri: 9:00 AM – 6:00 PM<br />Saturday: 10:00 AM – 4:00 PM<br />Sunday: Closed</p></div></article>
             </div>
           </div>
@@ -50,7 +51,7 @@ export default function Contact() {
             <iframe className="map" loading="lazy" src={`https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed`} title="Prakruthi Aqua map location" referrerPolicy="no-referrer-when-downgrade" />
             <div className="map-card">
               <span className="icon-tile"><MapPin size={19} /></span>
-              <div><b>Prakruthi Aqua</b><p>Attur Layout, Chikkadinne, Yelahanka New Town, Bengaluru</p></div>
+              <div><b>Prakruthi Aqua</b><p>{businessAddress}</p></div>
               <a className="btn btn-dark" href={mapLink} target="_blank" rel="noreferrer">Directions <ArrowUpRight size={15} /></a>
             </div>
           </div>
