@@ -2024,3 +2024,12 @@ h1 em, h2 em, h3 em, blockquote em { font-style: normal; font-weight: 300; lette
 /* Keep the footer contact button readable on hover and keyboard focus. */
 .footer-cta .btn-outline-light:hover,
 .footer-cta .btn-outline-light:focus-visible { background: var(--white); color: var(--forest-deep); border-color: var(--white); }
+
+/* Razorpay checkout states */
+.pay-spin { animation: spin 1s linear infinite; }
+.pay-paid { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 99px; background: var(--leaf-soft); color: var(--forest-deep); font-size: 14px; font-weight: 600; }
+.pay-retry h1 em { color: var(--forest); }
+.pay-retry .alert { max-width: 46ch; }
+.pay-new { margin-top: 6px; font-size: 13px; color: var(--muted); text-decoration: underline; }
+.pay-new:hover { color: var(--forest-deep); }
+.pay-methods { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 12px; color: var(--muted); }

@@ -2,7 +2,7 @@ import { products as seedProducts,categories as seedCategories,type Product } fr
 import { initialBanners,type Banner } from './banner-data';
 export type Category={id:string;name:string;active:boolean;position:number};
 export type OrderItem={slug:string;name:string;price:number;quantity:number};
-export type Order={id:string;order_number:string;created_at:string;customer_name:string;email:string;phone:string;address:string;notes:string;status:'pending'|'confirmed'|'processing'|'shipped'|'delivered'|'cancelled';payment_status:'unpaid'|'paid'|'refunded';total:number;items:OrderItem[];source?:string};
+export type Order={id:string;order_number:string;created_at:string;customer_name:string;email:string;phone:string;address:string;notes:string;status:'pending'|'confirmed'|'processing'|'shipped'|'delivered'|'cancelled';payment_status:'unpaid'|'pending'|'paid'|'failed'|'refunded';total:number;items:OrderItem[];source?:string;payment_method?:string;razorpay_order_id?:string|null;razorpay_payment_id?:string|null;payment_mode?:string|null;paid_at?:string|null;payment_error?:string|null};
 export type StoreData={products:Product[];categories:Category[];banners:Banner[];orders:Order[]};
 export const DEMO_KEY='prakruthi-admin-preview-v1';
 export function initialStore():StoreData{return{products:seedProducts.map((p,i)=>({...p,id:p.slug,active:true,featured:[0,4,6,9].includes(i),stock:0,description:''})),categories:seedCategories.filter(c=>c!=='All products').map((name,i)=>({id:`category-${i}`,name,active:true,position:i})),banners:initialBanners.map((b,i)=>({...b,active:b.active!==false,position:i})),orders:[]}}

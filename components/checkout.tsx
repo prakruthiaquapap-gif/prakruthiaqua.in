@@ -1,15 +1,19 @@
 'use client';
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import DeliveryLocation from './delivery-location';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { ArrowRight, CheckCircle2, ShoppingBag, Lock, Check, UserRound, UserPlus } from 'lucide-react';
+import { ArrowRight, CheckCircle2, ShoppingBag, Lock, Check, UserRound, UserPlus, CreditCard, Loader2, AlertCircle, RotateCcw } from 'lucide-react';
 import { useStorefront } from './storefront-data';
 import { useAuthPopup } from './auth-popup';
 import { useBag } from './site';
 import { money } from '@/lib/catalog';
 import { supabase } from '@/lib/supabase';
 import { readDemo, writeDemo, type Order, type OrderItem } from '@/lib/admin-data';
+import { onlinePaymentsEnabled, readPending, savePending, clearPending, callPayments, loadRazorpay, openRazorpay, type PendingPayment, type CreateResult, type PaymentStatus, type RazorpaySuccess } from '@/lib/razorpay-client';
+
+type Phase = 'form' | 'starting' | 'paying' | 'verifying' | 'checking' | 'unpaid';
+type Confirmation = { number: string; total: number; paid: boolean };
 
 export default function Checkout() {
   const params = useSearchParams();
@@ -17,7 +21,9 @@ export default function Checkout() {
   const { items, clear } = useBag();
   const { user, ready, open: openAccount } = useAuthPopup();
   const needsAccount = !!supabase && !demo;
-  const [busy, setBusy] = useState(false), [error, setError] = useState(''), [confirmation, setConfirmation] = useState('');
+  const online = onlinePaymentsEnabled && !!supabase && !demo;
+  const [busy, setBusy] = useState(false), [error, setError] = useState(''), [confirmation, setConfirmation] = useState<Confirmation | null>(null);
+  const [phase, setPhase] = useState<Phase>('form'), [pending, setPending] = useState<PendingPayment | null>(null), [note, setNote] = useState('');
   const direct = products.find((p) => p.slug === params.get('product'));
   const qty = Math.min(20, Math.max(1, Number(params.get('quantity')) || 1));
   const selected = direct ? [{ slug: direct.slug, quantity: Math.floor(qty) }] : items;
@@ -26,6 +32,73 @@ export default function Checkout() {
     return p ? [{ slug: p.slug, name: p.name, quantity: i.quantity, price: p.price }] : [];
   });
   const total = orderItems.reduce((s, i) => s + i.price * i.quantity, 0);
+
+  // ---------- Razorpay payment flow ----------
+  const finish = useCallback((p: PendingPayment) => {
+    clearPending(); setPending(null); setPhase('form'); setError('');
+    if (!p.direct) clear();
+    setConfirmation({ number: p.order_number, total: p.total, paid: true });
+  }, [clear]);
+
+  const checkStatus = useCallback(async (p: PendingPayment) => {
+    setPhase('checking');
+    try {
+      const res = await callPayments<{ status: PaymentStatus }>({ action: 'status', order_id: p.order_id });
+      if (res.status === 'paid') return finish(p);
+      setNote(res.status === 'failed' ? 'Your last payment attempt did not go through. No money was taken for it.' : 'Your payment was not completed. Your order is saved — you can pay whenever you’re ready.');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'We couldn’t check your payment right now.');
+    }
+    setPhase('unpaid');
+  }, [finish]);
+
+  const verify = useCallback(async (p: PendingPayment, r: RazorpaySuccess) => {
+    setPhase('verifying'); setError('');
+    try {
+      const res = await callPayments<{ status: PaymentStatus }>({ action: 'verify', order_id: p.order_id, ...r });
+      if (res.status === 'paid') return finish(p);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'We couldn’t confirm your payment yet.');
+    }
+    // Fall back to asking Razorpay directly — the payment may still have succeeded.
+    await checkStatus(p);
+  }, [finish, checkStatus]);
+
+  const startPayment = useCallback(async (p: PendingPayment) => {
+    setPhase('starting'); setError(''); setNote('');
+    try {
+      const order = await callPayments<CreateResult>({ action: 'create', order_id: p.order_id });
+      if (order.status === 'paid') return finish(p);
+      await loadRazorpay();
+      setPhase('paying');
+      openRazorpay(order, {
+        onSuccess: (r) => { void verify(p, r); },
+        onDismiss: () => { setPhase((cur) => (cur === 'paying' ? 'unpaid' : cur)); setNote('Payment was cancelled. Your order is saved — you can pay whenever you’re ready.'); },
+        onFailed: (message) => setError(message),
+      });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not start the payment. Please try again.');
+      setPhase('unpaid');
+    }
+  }, [finish, verify]);
+
+  // After a refresh (or returning later), re-check any unfinished payment with Razorpay.
+  useEffect(() => {
+    if (!online || !ready || !user || confirmation) return;
+    const p = readPending();
+    if (!p) return;
+    setPending(p);
+    void checkStatus(p);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [online, ready, user]);
+
+  // Warn before leaving while money may be moving.
+  useEffect(() => {
+    if (phase !== 'verifying' && phase !== 'starting') return;
+    const warn = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ''; };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [phase]);
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -41,12 +114,20 @@ export default function Checkout() {
         const number = `DEMO-${Date.now().toString().slice(-7)}`;
         const order: Order = { id, order_number: number, created_at: new Date().toISOString(), customer_name: customer.name, email: customer.email, phone: customer.phone, address: customer.address, notes: customer.notes, status: 'pending', payment_status: 'unpaid', total, items: orderItems, source: 'demo-checkout' };
         writeDemo({ ...data, orders: [order, ...data.orders] });
-        setConfirmation(number);
+        setConfirmation({ number, total, paid: false });
       } else {
         if (!supabase) throw Error('Online ordering is not connected yet. Please contact our team to place your order.');
-        const { data, error } = await supabase.rpc('prakruthi_place_order', { p_customer: customer, p_items: orderItems.map((i) => ({ slug: i.slug, quantity: i.quantity })) });
+        const { data, error } = await supabase.rpc('prakruthi_place_order', { p_customer: { ...customer, payment_method: online ? 'razorpay' : 'offline' }, p_items: orderItems.map((i) => ({ slug: i.slug, quantity: i.quantity })) });
         if (error) throw error;
-        setConfirmation(String(data.order_number));
+        if (online) {
+          if (!data?.id) throw Error('Online payment needs the latest database update. Please contact us to complete your order.');
+          const p: PendingPayment = { order_id: String(data.id), order_number: String(data.order_number), total: Number(data.total), direct: !!direct, created_at: Date.now() };
+          savePending(p); setPending(p);
+          setBusy(false);
+          await startPayment(p);
+          return;
+        }
+        setConfirmation({ number: String(data.order_number), total, paid: false });
       }
       if (!direct) clear();
     } catch (e) {
@@ -80,11 +161,42 @@ export default function Checkout() {
     <main id="main" className="section section-paper">
       <div className="container"><div className="confirm">
         <span className="confirm-icon"><CheckCircle2 size={34} /></span>
-        <p className="eyebrow">{demo ? 'Demo order saved locally' : 'Order request received'}</p>
+        <p className="eyebrow">{demo ? 'Demo order saved locally' : confirmation.paid ? 'Payment successful' : 'Order request received'}</p>
         <h1>Thank you for your order.</h1>
-        <p className="confirm-number">{confirmation}</p>
-        <p className="muted">{demo ? 'This is a preview order. It is not sent to the business.' : 'Our team will confirm availability, shipping charges and payment instructions using the contact details you provided. No payment has been collected.'}</p>
+        <p className="confirm-number">{confirmation.number}</p>
+        {confirmation.paid && <p className="pay-paid"><CheckCircle2 size={16} /> {money(confirmation.total)} paid securely via Razorpay</p>}
+        <p className="muted">{demo ? 'This is a preview order. It is not sent to the business.' : confirmation.paid ? 'We’ve received your payment. Our team will now pack your order in Bengaluru and share dispatch details with you.' : 'Our team will confirm availability, shipping charges and payment instructions using the contact details you provided. No payment has been collected.'}</p>
         <Link href="/shop/" className="btn btn-dark btn-lg">Continue shopping <ArrowRight size={16} /></Link>
+      </div></div>
+    </main>
+  );
+
+  if (phase === 'starting' || phase === 'verifying' || phase === 'checking') return (
+    <main id="main" className="section section-paper">
+      <div className="container"><div className="confirm pay-progress" role="status" aria-live="polite">
+        <span className="confirm-icon"><Loader2 size={32} className="pay-spin" /></span>
+        <p className="eyebrow"><span className="dot" />{phase === 'starting' ? 'Secure payment' : 'Please wait'}</p>
+        <h1>{phase === 'starting' ? 'Opening secure payment…' : phase === 'verifying' ? 'Confirming your payment…' : 'Checking your payment…'}</h1>
+        <p className="muted">{phase === 'checking' ? 'We’re checking with Razorpay whether your last payment went through.' : 'Please don’t close or refresh this page. This takes only a few seconds.'}</p>
+        {pending && <p className="confirm-number">{pending.order_number}</p>}
+      </div></div>
+    </main>
+  );
+
+  if (phase === 'unpaid' && pending) return (
+    <main id="main" className="section section-paper">
+      <div className="container"><div className="confirm pay-retry">
+        <span className="confirm-icon confirm-icon-muted"><AlertCircle size={32} /></span>
+        <p className="eyebrow"><span className="dot" />Payment pending</p>
+        <h1>Complete your <em>payment.</em></h1>
+        <p className="confirm-number">{pending.order_number} · {money(pending.total)}</p>
+        <p className="muted">{note || 'Your order is saved. Complete the payment to confirm it.'}</p>
+        {error && <p className="alert alert-error" role="alert">{error}</p>}
+        <div className="checkout-gate-actions">
+          <button className="btn btn-dark btn-lg" onClick={() => void startPayment(pending)}><CreditCard size={17} /> Pay {money(pending.total)} now</button>
+          <button className="btn btn-outline btn-lg" onClick={() => void checkStatus(pending)}><RotateCcw size={16} /> I’ve already paid — check again</button>
+        </div>
+        <button className="pay-new" onClick={() => { clearPending(); setPending(null); setPhase('form'); setError(''); setNote(''); }}>Start a new order instead</button>
       </div></div>
     </main>
   );
@@ -106,7 +218,7 @@ export default function Checkout() {
         <div className="page-head">
           <p className="eyebrow"><span className="dot" />Checkout</p>
           <h1>Almost <em>there.</em></h1>
-          <p className="muted">Submit your order request. Our team confirms availability, shipping and payment.</p>
+          <p className="muted">{online ? 'Enter your delivery details and pay securely with UPI, card, net banking or wallet.' : 'Submit your order request. Our team confirms availability, shipping and payment.'}</p>
         </div>
         <div className="checkout-grid">
           <form className="form-card" onSubmit={submit}>
@@ -126,7 +238,10 @@ export default function Checkout() {
             </label>
             {!supabase && !demo && <p className="alert alert-error">Online orders need a connected Supabase project. You can still contact our team to place an order.</p>}
             {error && <p className="alert alert-error" role="alert">{error}</p>}
-            <button className="btn btn-dark btn-lg btn-block" disabled={busy || (!supabase && !demo)}>{busy ? 'Submitting…' : demo ? 'Save demo order' : 'Submit order request'} <ArrowRight size={16} /></button>
+            <button className="btn btn-dark btn-lg btn-block" disabled={busy || phase === 'paying' || (!supabase && !demo)}>
+              {busy ? (online ? 'Preparing payment…' : 'Submitting…') : demo ? 'Save demo order' : online ? <><Lock size={16} /> Pay {money(total)} now</> : 'Submit order request'} {!online && <ArrowRight size={16} />}
+            </button>
+            {online && <p className="pay-methods"><CreditCard size={14} /> Secured by Razorpay · UPI · Cards · Net banking · Wallets</p>}
           </form>
           <aside className="summary">
             <h2>Order summary</h2>
@@ -141,7 +256,9 @@ export default function Checkout() {
               );
             })}
             <div className="summary-total"><span>Subtotal</span><b>{money(total)}</b></div>
-            <p className="fine"><Lock size={13} /> Shipping and the final payable amount are confirmed by our team before payment. No payment is collected here.</p>
+            {online
+              ? <p className="fine"><Lock size={13} /> You pay {money(total)} securely through Razorpay. Your card or UPI details never touch our website.</p>
+              : <p className="fine"><Lock size={13} /> Shipping and the final payable amount are confirmed by our team before payment. No payment is collected here.</p>}
             <Link className="link-arrow" href="/contact/">Need help? Contact us</Link>
           </aside>
         </div>
