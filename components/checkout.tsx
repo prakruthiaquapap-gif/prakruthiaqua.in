@@ -20,8 +20,8 @@ export default function Checkout() {
   const { products, loading, demo } = useStorefront();
   const { items, clear } = useBag();
   const { user, ready, open: openAccount } = useAuthPopup();
-  const needsAccount = !!supabase && !demo;
-  const online = onlinePaymentsEnabled && !!supabase && !demo;
+  const needsAccount = !demo;
+  const online = onlinePaymentsEnabled && !demo;
   const [busy, setBusy] = useState(false), [error, setError] = useState(''), [confirmation, setConfirmation] = useState<Confirmation | null>(null);
   const [phase, setPhase] = useState<Phase>('form'), [pending, setPending] = useState<PendingPayment | null>(null), [note, setNote] = useState('');
   const direct = products.find((p) => p.slug === params.get('product'));
@@ -116,9 +116,12 @@ export default function Checkout() {
         writeDemo({ ...data, orders: [order, ...data.orders] });
         setConfirmation({ number, total, paid: false });
       } else {
-        if (!supabase) throw Error('Online ordering is not connected yet. Please contact our team to place your order.');
-        const { data, error } = await supabase.rpc('prakruthi_place_order', { p_customer: { ...customer, payment_method: online ? 'razorpay' : 'offline' }, p_items: orderItems.map((i) => ({ slug: i.slug, quantity: i.quantity })) });
-        if (error) throw error;
+        const res = await fetch('/api/orders/', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ customer, items: orderItems.map((i) => ({ slug: i.slug, quantity: i.quantity })), payment_method: online ? 'razorpay' : 'offline' }),
+        }).catch(() => { throw Error('We couldn’t reach our server. Check your connection and try again.'); });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw Error(data?.error || 'Unable to place your order. Please try again.');
         if (online) {
           if (!data?.id) throw Error('Online payment needs the latest database update. Please contact us to complete your order.');
           const p: PendingPayment = { order_id: String(data.id), order_number: String(data.order_number), total: Number(data.total), direct: !!direct, created_at: Date.now() };
@@ -224,7 +227,7 @@ export default function Checkout() {
           <form className="form-card" onSubmit={submit}>
             <h2>Your details</h2>
             <div className="fields">
-              <label>Full name *<input name="name" required maxLength={100} autoComplete="name" defaultValue={String(user?.user_metadata?.full_name || '')} /></label>
+              <label>Full name *<input name="name" required maxLength={100} autoComplete="name" defaultValue={user?.name || ''} /></label>
               <label>Email address *<input name="email" type="email" required maxLength={200} autoComplete="email" defaultValue={user?.email || ''} /></label>
               <label>Phone number *<input name="phone" type="tel" required maxLength={30} autoComplete="tel" /></label>
               <DeliveryLocation />

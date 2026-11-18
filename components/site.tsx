@@ -41,7 +41,7 @@ export function Logo({ light = false }: { light?: boolean }) {
 
 export function SiteProvider({ children }: { children: React.ReactNode }) {
   const { open: openAccount, user, requireAuth } = useAuthPopup();
-  const accountName = String(user?.user_metadata?.full_name || user?.email || '').trim();
+  const accountName = String(user?.name || user?.email || '').trim();
   const firstName = accountName.split(/[\s@]/)[0] || 'Account';
   const { products } = useStorefront();
   const [bag, setBag] = useState<Item[]>([]);

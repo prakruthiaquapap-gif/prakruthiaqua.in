@@ -1,15 +1,14 @@
 // Server-only Razorpay + order logic. Imported only by app/api/razorpay route handlers,
 // so RAZORPAY_KEY_SECRET and SUPABASE_SERVICE_ROLE_KEY never reach the browser.
 import { createHmac, timingSafeEqual } from 'node:crypto';
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { adminDb, ServerError } from './server-db';
 
-export class PaymentError extends Error {
-  constructor(message: string, public status = 400) { super(message); }
-}
+export { ServerError as PaymentError };
+const PaymentError = ServerError;
 
 type Source = 'checkout' | 'status' | 'webhook';
 export type DbOrder = {
-  id: string; order_number: string; user_id: string | null; customer_name: string; email: string; phone: string;
+  id: string; order_number: string; user_id: string | null; customer_id: string | null; customer_name: string; email: string; phone: string;
   status: string; payment_status: string; payment_method: string; total: number; amount_paise: number | null; currency: string | null;
   razorpay_order_id: string | null; razorpay_payment_id: string | null;
 };
@@ -18,19 +17,11 @@ export type RzpPayment = { id: string; order_id: string; amount: number; currenc
 function env() {
   const keyId = process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || '';
   const keySecret = process.env.RAZORPAY_KEY_SECRET || '';
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
   if (!keyId || !keySecret) throw new PaymentError('Online payments are not configured yet (Razorpay keys missing).', 503);
-  if (!url || !serviceKey) throw new PaymentError('Online payments are not configured yet (Supabase service key missing).', 503);
-  return { keyId, keySecret, url, serviceKey };
+  return { keyId, keySecret };
 }
 
-let admin: SupabaseClient | null = null;
-export function db() {
-  const { url, serviceKey } = env();
-  admin ??= createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
-  return admin;
-}
+export const db = adminDb;
 export const razorpayKeyId = () => env().keyId;
 
 // ---------- Razorpay REST ----------
@@ -69,20 +60,12 @@ export async function logEvent(o: Partial<DbOrder> | null, event: string, source
   });
 }
 
-export async function userFromRequest(req: Request) {
-  const token = (req.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '');
-  if (!token) throw new PaymentError('Please sign in to pay.', 401);
-  const { data } = await db().auth.getUser(token);
-  if (!data?.user) throw new PaymentError('Your session has expired. Please sign in again.', 401);
-  return data.user;
-}
-
-export async function loadOwnOrder(orderId: unknown, userId: string): Promise<DbOrder> {
+export async function loadOwnOrder(orderId: unknown, customerId: string): Promise<DbOrder> {
   if (!orderId || typeof orderId !== 'string') throw new PaymentError('Missing order');
   const { data, error } = await db().from('prakruthi_orders').select('*').eq('id', orderId).maybeSingle();
   if (error) throw new PaymentError('Payments need the latest database update (run supabase/razorpay-payments.sql).', 500);
   if (!data) throw new PaymentError('Order not found', 404);
-  if (data.user_id !== userId) throw new PaymentError('This order belongs to a different account', 403);
+  if (data.customer_id !== customerId) throw new PaymentError('This order belongs to a different account', 403);
   if (data.payment_method !== 'razorpay') throw new PaymentError('This order is not set up for online payment');
   return data as DbOrder;
 }

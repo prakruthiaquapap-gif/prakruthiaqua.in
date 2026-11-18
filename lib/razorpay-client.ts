@@ -1,6 +1,5 @@
 // Browser-side helpers for Razorpay Checkout. Only the public key id is ever used here;
 // the key secret stays on the server in app/api/razorpay (Vercel environment variable).
-import { supabase } from './supabase';
 
 export const onlinePaymentsEnabled = !!process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
 
@@ -24,14 +23,11 @@ export type CreateResult = {
 export type PaymentStatus = 'paid' | 'pending' | 'failed' | 'unpaid';
 
 export async function callPayments<T>(body: Record<string, unknown>): Promise<T> {
-  if (!supabase) throw Error('Online payments are not connected yet.');
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) throw Error('Please sign in again to continue with payment.');
   let res: Response;
   try {
     res = await fetch('/api/razorpay/', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
   } catch {

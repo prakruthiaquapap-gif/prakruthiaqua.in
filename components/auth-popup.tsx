@@ -1,22 +1,37 @@
 'use client';
 
+// Website customer accounts. These are stored in the website's own table
+// (public.prakruthi_website_customers via /api/auth), separate from dealer-portal logins,
+// so the same email can register here even if it is already used on the dealer portal.
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
-import type { User } from '@supabase/supabase-js';
-import { ArrowRight, CheckCircle2, Eye, EyeOff, Leaf, X } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { ArrowRight, CheckCircle2, Eye, EyeOff, Leaf, X, PhoneCall, MessageCircle } from 'lucide-react';
 import { DealerPortalCard } from './dealer-portal';
 
+export type CustomerUser = { id: string; name: string; email: string; phone: string };
+type Mode = 'signin' | 'register' | 'reset';
 type OpenOptions = { mode?: 'signin' | 'register'; next?: string; reason?: string };
-type AuthContextValue = { open: (opts?: OpenOptions | React.SyntheticEvent) => void; user: User | null; ready: boolean; requireAuth: (href: string) => boolean };
+type AuthContextValue = { open: (opts?: OpenOptions | React.SyntheticEvent) => void; user: CustomerUser | null; ready: boolean; requireAuth: (href: string) => boolean };
 const NEXT_KEY = 'prakruthi-auth-next';
 const AuthPopupContext = createContext<AuthContextValue>({ open: () => {}, user: null, ready: false, requireAuth: () => true });
 export const useAuthPopup = () => useContext(AuthPopupContext);
 
+async function api<T>(path: string, body?: Record<string, unknown>): Promise<T> {
+  let res: Response;
+  try {
+    res = await fetch(path, body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : { cache: 'no-store' });
+  } catch {
+    throw Error('We couldn’t reach the account service. Check your internet connection and try again.');
+  }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw Error(data?.error || 'Something went wrong. Please try again.');
+  return data as T;
+}
+
 export function AuthPopupProvider({ children }: { children: React.ReactNode }) {
   const [visible, setVisible] = useState(false);
-  const [mode, setMode] = useState<'signin' | 'register' | 'reset'>('signin');
-  const [user, setUser] = useState<User | null>(null);
-  const [ready, setReady] = useState(!supabase);
+  const [mode, setMode] = useState<Mode>('signin');
+  const [user, setUser] = useState<CustomerUser | null>(null);
+  const [ready, setReady] = useState(false);
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
@@ -24,17 +39,16 @@ export function AuthPopupProvider({ children }: { children: React.ReactNode }) {
   const [showPassword, setShowPassword] = useState(false);
   const panel = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLElement | null>(null);
-  const awaitingEmail = useRef(false);
+
   const open = (input?: OpenOptions | React.SyntheticEvent) => {
     const opts = input && !('nativeEvent' in input) ? input : undefined;
-    awaitingEmail.current = false;
     trigger.current = document.activeElement as HTMLElement;
     try { if (opts?.next) localStorage.setItem(NEXT_KEY, opts.next); } catch {}
     setReason(opts?.reason || (opts?.next?.startsWith('/checkout') ? 'Sign in or create an account to place your order.' : ''));
     setMode(opts?.mode || 'signin'); setMessage(''); setError(''); setShowPassword(false); setVisible(true);
   };
   const requireAuth = (href: string) => {
-    if (!supabase || user) return true;
+    if (user) return true;
     open({ mode: 'signin', next: href });
     return false;
   };
@@ -46,21 +60,17 @@ export function AuthPopupProvider({ children }: { children: React.ReactNode }) {
     return false;
   };
   const close = () => {
-    if (!awaitingEmail.current) { try { localStorage.removeItem(NEXT_KEY); } catch {} }
+    try { localStorage.removeItem(NEXT_KEY); } catch {}
     setVisible(false); trigger.current?.focus();
   };
 
   useEffect(() => {
-    if (!supabase) return;
     let active = true;
-    // Record the person as a website customer (dealer-portal logins are shared; this keeps a website customer list).
-    const touch = () => { void supabase?.rpc('prakruthi_touch_customer_profile').then(() => {}); };
-    supabase.auth.getUser().then(({ data }) => { if (!active) return; setUser(data.user); setReady(true); if (data.user) { touch(); continueNext(); } });
-    const { data } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user ?? null); setReady(true);
-      if (event === 'SIGNED_IN' && session?.user) { touch(); continueNext(); }
-    });
-    return () => { active = false; data.subscription.unsubscribe(); };
+    api<{ user: CustomerUser | null }>('/api/auth/me/')
+      .then((d) => { if (active) setUser(d.user); })
+      .catch(() => {})
+      .finally(() => { if (active) setReady(true); });
+    return () => { active = false; };
   }, []);
 
   useEffect(() => {
@@ -80,38 +90,33 @@ export function AuthPopupProvider({ children }: { children: React.ReactNode }) {
     return () => { document.body.style.overflow = previous; document.removeEventListener('keydown', onKey); };
   }, [visible]);
 
-  function switchMode(next: typeof mode) { setMode(next); setError(''); setMessage(''); setShowPassword(false); }
+  function switchMode(next: Mode) { setMode(next); setError(''); setMessage(''); setShowPassword(false); }
+
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault(); setError(''); setMessage('');
-    if (!supabase) { setError('Account access is being set up. Please contact us for help with your order.'); return; }
     const data = new FormData(e.currentTarget);
     const email = String(data.get('email') || '').trim();
     const password = String(data.get('password') || '');
     if (mode === 'register' && password !== data.get('confirmPassword')) { setError('Passwords do not match.'); return; }
     setBusy(true);
     try {
-      if (mode === 'register') {
-        const { data: result, error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: String(data.get('name') || '').trim() }, emailRedirectTo: location.origin + '/account/' } });
-        if (error) throw error;
-        if (result.session && continueNext()) return;
-        if (!result.session) awaitingEmail.current = true;
-        setMessage(result.session ? 'Your account is ready. Welcome to Prakruthi Aqua.' : 'Check your email for the confirmation link. After confirming, you’ll come straight back here.');
-      } else if (mode === 'reset') {
-        // Email link uses the existing account callback, without exposing a password reset token.
-        const { error } = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: false, emailRedirectTo: location.origin + '/account/' } });
-        if (error) throw error;
-        setMessage('If your account is eligible, you’ll receive a secure sign-in link by email.');
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        if (continueNext()) return;
-        setMessage('You’re signed in. Welcome back.');
-      }
+      const result = mode === 'register'
+        ? await api<{ user: CustomerUser }>('/api/auth/register/', { name: String(data.get('name') || '').trim(), email, phone: String(data.get('phone') || '').trim(), password })
+        : await api<{ user: CustomerUser }>('/api/auth/login/', { email, password });
+      setUser(result.user);
+      if (continueNext()) return;
+      setMessage(mode === 'register' ? 'Your account is ready. Welcome to Prakruthi Aqua.' : 'You’re signed in. Welcome back.');
     } catch (err) {
-      const friendly = authErrorMessage(err, mode);
-      setError(friendly.text);
-      if (friendly.switchTo) setMode(friendly.switchTo);
-    }
+      const text = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
+      setError(text);
+      if (mode === 'register' && /already registered/i.test(text)) setMode('signin');
+    } finally { setBusy(false); }
+  }
+
+  async function signOut() {
+    setBusy(true);
+    try { await api('/api/auth/logout/', {}); setUser(null); setMessage(''); }
+    catch { setError('Unable to sign out. Please try again.'); }
     finally { setBusy(false); }
   }
 
@@ -124,21 +129,42 @@ export function AuthPopupProvider({ children }: { children: React.ReactNode }) {
           <div><img className="auth-popup-logo" src="/images/prakruthi-icon.svg" alt="Prakruthi Aqua" /><span className="eyebrow">A little care. A world of life.</span><h2>Your aquatic<br /><em>journey starts here.</em></h2>{!user && mode !== 'reset' && <DealerPortalCard compact />}<span className="auth-popup-note"><Leaf size={16} /> Thoughtfully made in Bengaluru</span></div>
         </aside>
         <div className="auth-popup-main">
-          {user ? <div className="auth-popup-welcome"><CheckCircle2 size={38} /><p className="eyebrow">Your account</p><h1 id="auth-popup-title">Welcome back.</h1><p className="muted">{user.user_metadata.full_name || user.email}</p><p className="fine">Signed in as {user.email}</p><button className="btn btn-leaf btn-block" onClick={close}>Continue shopping <ArrowRight size={16} /></button><button className="btn btn-outline btn-block" disabled={busy} onClick={async () => { if (!supabase) return; setBusy(true); const { error } = await supabase.auth.signOut({ scope: 'local' }); setBusy(false); if (error) setError('Unable to sign out. Please try again.'); else { setUser(null); setMessage(''); } }}>Sign out</button>{error && <p role="alert" className="auth-popup-error">{error}</p>}</div> : <>
-            <p className="eyebrow"><span className="dot" /> Prakruthi Aqua members</p>
-            {reason && mode !== 'reset' && <p className="auth-popup-reason">{reason}</p>}
-            <h1 id="auth-popup-title">{mode === 'register' ? 'Create an account.' : mode === 'reset' ? 'Email sign-in link.' : 'Welcome back.'}</h1>
-            <p className="muted">{mode === 'register' ? 'Join our community of aquarium lovers. Already registered on our dealer portal? Just sign in with the same email and password.' : mode === 'reset' ? 'Get a secure link to sign in without your password.' : 'Sign in to your Prakruthi Aqua account.'}</p>
-            {mode !== 'reset' && <div className="auth-popup-dealer-mobile"><DealerPortalCard compact /></div>}
+          {user ? (
+            <div className="auth-popup-welcome">
+              <CheckCircle2 size={38} />
+              <p className="eyebrow">Your account</p>
+              <h1 id="auth-popup-title">Welcome{message ? '' : ' back'}, {user.name.split(' ')[0]}.</h1>
+              <p className="fine">Signed in as {user.email}</p>
+              {message && <p className="alert" role="status">{message}</p>}
+              <button className="btn btn-leaf btn-block" onClick={close}>Continue shopping <ArrowRight size={16} /></button>
+              <button className="btn btn-outline btn-block" disabled={busy} onClick={() => void signOut()}>Sign out</button>
+              {error && <p role="alert" className="auth-popup-error">{error}</p>}
+            </div>
+          ) : mode === 'reset' ? (
+            <>
+              <p className="eyebrow"><span className="dot" /> Account help</p>
+              <h1 id="auth-popup-title">Forgot your password?</h1>
+              <p className="muted">Contact our team and we’ll help you reset it quickly. Please message from the phone number or email you registered with.</p>
+              <a className="btn btn-dark btn-block" href="https://wa.me/918904373735?text=Hi%20Prakruthi%20Aqua%2C%20I%20need%20help%20resetting%20my%20website%20account%20password." target="_blank" rel="noreferrer"><MessageCircle size={16} /> WhatsApp us</a>
+              <a className="btn btn-outline btn-block" href="tel:+918904373735"><PhoneCall size={16} /> Call +91 89043 73735</a>
+              <button type="button" className="auth-popup-help" onClick={() => switchMode('signin')}>← Back to sign in</button>
+            </>
+          ) : <>
+            <p className="eyebrow"><span className="dot" /> Prakruthi Aqua customers</p>
+            {reason && <p className="auth-popup-reason">{reason}</p>}
+            <h1 id="auth-popup-title">{mode === 'register' ? 'Create an account.' : 'Welcome back.'}</h1>
+            <p className="muted">{mode === 'register' ? 'Join our community of aquarium lovers. This website account is separate from the dealer portal.' : 'Sign in to your Prakruthi Aqua website account.'}</p>
+            <div className="auth-popup-dealer-mobile"><DealerPortalCard compact /></div>
             <div className="auth-popup-tabs" role="group" aria-label="Account access"><button disabled={busy} aria-pressed={mode !== 'register'} onClick={() => switchMode('signin')}>Sign In</button><button disabled={busy} aria-pressed={mode === 'register'} onClick={() => switchMode('register')}>Register</button></div>
             <form className="auth-form" key={mode} onSubmit={submit}>
               <fieldset disabled={busy}>
                 {mode === 'register' && <label>Full name<input name="name" autoComplete="name" required maxLength={100} placeholder="Your full name" /></label>}
                 <label>Email address<input name="email" type="email" autoComplete="email" required maxLength={200} placeholder="you@example.com" /></label>
-                {mode !== 'reset' && <label>Password<span className="auth-popup-password"><input name="password" type={showPassword ? 'text' : 'password'} autoComplete={mode === 'register' ? 'new-password' : 'current-password'} minLength={mode === 'register' ? 8 : 1} required placeholder={mode === 'register' ? 'At least 8 characters' : 'Enter your password'} /><button type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button></span></label>}
+                {mode === 'register' && <label>Phone number <small>(optional)</small><input name="phone" type="tel" autoComplete="tel" maxLength={30} placeholder="+91 98765 43210" /></label>}
+                <label>Password<span className="auth-popup-password"><input name="password" type={showPassword ? 'text' : 'password'} autoComplete={mode === 'register' ? 'new-password' : 'current-password'} minLength={mode === 'register' ? 8 : 1} required placeholder={mode === 'register' ? 'At least 8 characters' : 'Enter your password'} /><button type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button></span></label>
                 {mode === 'register' && <label>Confirm password<input name="confirmPassword" type={showPassword ? 'text' : 'password'} autoComplete="new-password" minLength={8} required placeholder="Repeat your password" /></label>}
-                {mode === 'signin' && <button type="button" className="auth-popup-help" onClick={() => switchMode('reset')}>Forgot password? Email me a sign-in link</button>}
-                <button className="btn btn-dark btn-block" type="submit">{busy ? 'Please wait…' : mode === 'register' ? 'Create account' : mode === 'reset' ? 'Send sign-in link' : 'Sign In'}<ArrowRight size={16} /></button>
+                {mode === 'signin' && <button type="button" className="auth-popup-help" onClick={() => switchMode('reset')}>Forgot password?</button>}
+                <button className="btn btn-dark btn-block" type="submit">{busy ? 'Please wait…' : mode === 'register' ? 'Create account' : 'Sign In'}<ArrowRight size={16} /></button>
               </fieldset>
             </form>
             {error && <p className="auth-popup-error" role="alert">{error}</p>}
@@ -149,31 +175,4 @@ export function AuthPopupProvider({ children }: { children: React.ReactNode }) {
       </div>
     </div>
   )}</AuthPopupContext.Provider>;
-}
-
-// Turn Supabase auth errors into clear, actionable messages instead of a generic failure.
-function authErrorMessage(err: unknown, mode: 'signin' | 'register' | 'reset'): { text: string; switchTo?: 'signin' } {
-  const e = (err ?? {}) as { code?: string; message?: string; status?: number };
-  const code = e.code || '';
-  const msg = (e.message || '').toLowerCase();
-  if (code === 'user_already_exists' || code === 'email_exists' || msg.includes('already registered') || msg.includes('already been registered'))
-    return { text: 'This email already has a Prakruthi Aqua login — for example from our dealer portal. Please sign in with the same email and password you use there. Forgot it? Use “Email me a sign-in link”.', switchTo: 'signin' };
-  if (code === 'weak_password' || msg.includes('password should') || msg.includes('weak password'))
-    return { text: e.message ? `Please choose a stronger password. ${e.message}` : 'Please choose a stronger password (at least 8 characters, mixing letters and numbers).' };
-  if (code === 'email_address_invalid' || msg.includes('email address') && msg.includes('invalid'))
-    return { text: 'This email address was not accepted. Please use your real, active email address (test addresses like test@test.com are blocked).' };
-  if (code === 'signup_disabled' || msg.includes('signups not allowed'))
-    return { text: 'New account registration is currently turned off. Please contact us to place your order.' };
-  if (code.startsWith('over_') || e.status === 429 || msg.includes('rate limit'))
-    return { text: 'Too many attempts in a short time. Please wait a few minutes and try again.' };
-  if (msg.includes('database error'))
-    return { text: 'Our account system could not save your details (database error). Please contact us — our team needs to fix the account setup.' };
-  if (code === 'invalid_credentials' || msg.includes('invalid login credentials'))
-    return { text: 'Incorrect email or password. Please try again, or use “Forgot password” to get a sign-in link.' };
-  if (code === 'email_not_confirmed' || msg.includes('email not confirmed'))
-    return { text: 'Please confirm your email first — check your inbox for the confirmation link.' };
-  if (msg.includes('failed to fetch') || msg.includes('network'))
-    return { text: 'We couldn’t reach the account service. Check your internet connection and try again.' };
-  const fallback = mode === 'signin' ? 'Unable to sign in.' : 'Unable to create your account.';
-  return { text: e.message ? `${fallback} ${e.message}` : `${fallback} Please try again shortly.` };
 }
