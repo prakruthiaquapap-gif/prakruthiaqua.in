@@ -53,10 +53,12 @@ export function AuthPopupProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!supabase) return;
     let active = true;
-    supabase.auth.getUser().then(({ data }) => { if (!active) return; setUser(data.user); setReady(true); if (data.user) continueNext(); });
+    // Record the person as a website customer (dealer-portal logins are shared; this keeps a website customer list).
+    const touch = () => { void supabase?.rpc('prakruthi_touch_customer_profile').then(() => {}); };
+    supabase.auth.getUser().then(({ data }) => { if (!active) return; setUser(data.user); setReady(true); if (data.user) { touch(); continueNext(); } });
     const { data } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null); setReady(true);
-      if (event === 'SIGNED_IN' && session?.user) continueNext();
+      if (event === 'SIGNED_IN' && session?.user) { touch(); continueNext(); }
     });
     return () => { active = false; data.subscription.unsubscribe(); };
   }, []);
@@ -126,7 +128,7 @@ export function AuthPopupProvider({ children }: { children: React.ReactNode }) {
             <p className="eyebrow"><span className="dot" /> Prakruthi Aqua members</p>
             {reason && mode !== 'reset' && <p className="auth-popup-reason">{reason}</p>}
             <h1 id="auth-popup-title">{mode === 'register' ? 'Create an account.' : mode === 'reset' ? 'Email sign-in link.' : 'Welcome back.'}</h1>
-            <p className="muted">{mode === 'register' ? 'Join our community of aquarium lovers.' : mode === 'reset' ? 'Get a secure link to sign in without your password.' : 'Sign in to your Prakruthi Aqua account.'}</p>
+            <p className="muted">{mode === 'register' ? 'Join our community of aquarium lovers. Already registered on our dealer portal? Just sign in with the same email and password.' : mode === 'reset' ? 'Get a secure link to sign in without your password.' : 'Sign in to your Prakruthi Aqua account.'}</p>
             {mode !== 'reset' && <div className="auth-popup-dealer-mobile"><DealerPortalCard compact /></div>}
             <div className="auth-popup-tabs" role="group" aria-label="Account access"><button disabled={busy} aria-pressed={mode !== 'register'} onClick={() => switchMode('signin')}>Sign In</button><button disabled={busy} aria-pressed={mode === 'register'} onClick={() => switchMode('register')}>Register</button></div>
             <form className="auth-form" key={mode} onSubmit={submit}>
@@ -155,7 +157,7 @@ function authErrorMessage(err: unknown, mode: 'signin' | 'register' | 'reset'): 
   const code = e.code || '';
   const msg = (e.message || '').toLowerCase();
   if (code === 'user_already_exists' || code === 'email_exists' || msg.includes('already registered') || msg.includes('already been registered'))
-    return { text: 'An account with this email already exists. Please sign in instead.', switchTo: 'signin' };
+    return { text: 'This email already has a Prakruthi Aqua login — for example from our dealer portal. Please sign in with the same email and password you use there. Forgot it? Use “Email me a sign-in link”.', switchTo: 'signin' };
   if (code === 'weak_password' || msg.includes('password should') || msg.includes('weak password'))
     return { text: e.message ? `Please choose a stronger password. ${e.message}` : 'Please choose a stronger password (at least 8 characters, mixing letters and numbers).' };
   if (code === 'email_address_invalid' || msg.includes('email address') && msg.includes('invalid'))
