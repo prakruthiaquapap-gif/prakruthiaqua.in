@@ -10,15 +10,13 @@ export default function BusinessEnquiry() {
   return (
     <main id="main">
       <PageBanner
+        compact
+        backdropImage="/images/plants.jpg"
         label="Business Enquiry"
         eyebrow="Grow something good, together"
         title="Your business."
         accent="Our shared passion."
         description="Connect with Prakruthi Aqua about products for your store, distribution network or aquarium service business."
-        image="/images/plants.jpg"
-        imageAlt="A thriving planted aquarium"
-        stats={[['3', 'Partner types'], ['5', 'Product ranges'], ['Pan-India', 'Dispatch']]}
-        points={['Retail & online stores', 'Wholesale & distribution', 'Aquarium service providers']}
         primaryLabel="Send an enquiry"
         primaryHref="#business-form"
         secondaryLabel="Explore products"

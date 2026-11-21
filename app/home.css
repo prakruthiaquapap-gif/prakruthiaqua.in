@@ -896,3 +896,65 @@
 .aqv { border-bottom: 0; }
 /* The aquarium's wave edge rises into the values strip: keep the text clear of it */
 .aqv-grid { padding-bottom: calc(clamp(38px, 5.5vw, 76px) + 14px); }
+
+/* Lower banner copy replaces the former statistics and control strip. */
+.aqx.aqx-minimal .aqx-inner { align-items:flex-end; justify-content:flex-start; padding-top:clamp(60px,10svh,120px); padding-bottom:clamp(28px,5svh,56px); }
+.aqx.aqx-minimal .aqx-copies { flex:0 1 780px; }
+@media(max-width:960px) { .aqx.aqx-minimal .aqx-inner { align-items:flex-start; justify-content:flex-end; } .aqx.aqx-minimal .aqx-copies { flex:0 1 auto; width:100%; } }
+@media(max-width:720px) { .aqx.aqx-minimal .aqx-inner { padding-top:96px; padding-bottom:28px; } }
+
+/* Banner copy on the left; collection and story actions on the right. */
+.aqx.aqx-minimal .aqx-copies { flex:1; width:100%; max-width:none; }
+.aqx.aqx-minimal .aqx-copy { display:grid; grid-template-columns:minmax(0,1fr) auto; column-gap:40px; }
+.aqx.aqx-minimal .aqx-eyebrow,.aqx.aqx-minimal .aqx-title,.aqx.aqx-minimal .aqx-lead { grid-column:1; max-width:780px; }
+.aqx.aqx-minimal .aqx-lead { max-width:46ch; margin-bottom:0; }
+.aqx.aqx-minimal .aqx-actions { grid-column:2; grid-row:1 / span 3; align-self:end; justify-self:end; justify-content:flex-end; }
+@media(max-width:1180px) {
+ .aqx.aqx-minimal .aqx-copy { grid-template-columns:minmax(0,1fr); }
+ .aqx.aqx-minimal .aqx-actions { grid-column:1; grid-row:auto; margin-top:24px; }
+}
+@media(max-width:720px) {
+ .aqx.aqx-minimal .aqx-actions { width:100%; gap:12px; margin-top:20px; }
+ .aqx.aqx-minimal .aqx-cta { flex:0 1 auto; min-width:0; height:46px; padding-left:14px; font-size:10px; }
+ .aqx.aqx-minimal .aqx-cta i { width:32px; height:32px; }
+ .aqx.aqx-minimal .aqx-ghost { font-size:10px; gap:7px; white-space:nowrap; }
+ .aqx.aqx-minimal .aqx-play { width:30px; height:30px; }
+}
+
+/* Two-line headings and descriptions, with actions at the lower right. */
+.aqx.aqx-minimal .aqx-copy { grid-template-columns:minmax(0,1fr) auto; gap:0 28px; }
+.aqx.aqx-minimal .aqx-eyebrow { grid-column:1/-1; grid-row:1; }
+.aqx.aqx-minimal .aqx-title { grid-column:1/-1; grid-row:2; max-width:100%; font-size:clamp(40px,5.5vw,78px); line-height:1.06; }
+.aqx.aqx-minimal .aqx-title .aqx-line { white-space:nowrap; }
+.aqx.aqx-minimal .aqx-lead { grid-column:1; grid-row:3; max-width:none; font-size:15px; line-height:1.7; display:block; overflow:visible; }
+.aqx-description-line { display:block; }
+.aqx.aqx-minimal .aqx-actions { grid-column:2; grid-row:3; justify-self:end; align-self:end; margin:0; flex-wrap:nowrap; }
+@media(max-width:960px) {
+ .aqx.aqx-minimal .aqx-copy { grid-template-columns:minmax(0,1fr); }
+ .aqx.aqx-minimal .aqx-title { font-size:clamp(36px,6vw,58px); }
+ .aqx.aqx-minimal .aqx-actions { grid-column:1; grid-row:4; justify-self:end; margin-top:22px; }
+ .aqx.aqx-minimal .aqx-lead { font-size:14px; }
+}
+@media(max-width:720px) {
+ .aqx.aqx-minimal .aqx-title { font-size:clamp(24px,7.3vw,38px); margin-bottom:16px; }
+ .aqx.aqx-minimal .aqx-lead { font-size:12px; line-height:1.75; }
+ .aqx.aqx-minimal .aqx-actions { width:auto; max-width:100%; justify-self:end; justify-content:flex-end; margin-top:20px; }
+ .aqx.aqx-minimal .aqx-inner { padding-bottom:22px; }
+}
+
+/* Bring the hero actions slightly closer to the right edge. */
+.aqx.aqx-minimal .aqx-actions { transform:translateX(12px); }
+@media(max-width:720px) { .aqx.aqx-minimal .aqx-actions { transform:translateX(6px); } }
+
+/* Let actions reach the viewport edge instead of the old 780px copy column. */
+.aqx.aqx-minimal .aqx-inner {
+ max-width:none;
+ padding-left:max(var(--gutter),calc((100vw - 1320px) / 2 + var(--gutter)));
+ padding-right:var(--gutter);
+ padding-bottom:clamp(48px,6svh,72px);
+}
+.aqx.aqx-minimal .aqx-copy { width:100%; max-width:none; }
+.aqx.aqx-minimal .aqx-actions { transform:none; justify-self:end; }
+@media(max-width:720px) {
+ .aqx.aqx-minimal .aqx-inner { padding-left:var(--gutter); padding-right:var(--gutter); padding-bottom:32px; }
+}

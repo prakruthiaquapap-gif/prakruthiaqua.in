@@ -1,9 +1,8 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight, ArrowUpRight, Pause, Play } from 'lucide-react';
+import { ArrowUpRight, Play } from 'lucide-react';
 import { useStorefront } from './storefront-data';
-import { money, productHref } from '@/lib/catalog';
 import { slideClip } from '@/lib/banner-data';
 import { Bubbles } from './aquatic-fx';
 import HeroVideo, { type HeroClip } from './hero-video';
@@ -11,8 +10,19 @@ import FitScreen from './fit-screen';
 
 const INTERVAL = 7000;
 
+function descriptionLines(text: string) {
+  const words = text.trim().split(/\s+/);
+  if (words.length < 2) return [text];
+  let best = 1;
+  for (let i = 2; i < words.length; i++) {
+    if (Math.abs(words.slice(0, i).join(' ').length - text.length / 2) < Math.abs(words.slice(0, best).join(' ').length - text.length / 2)) best = i;
+  }
+  return [words.slice(0, best).join(' '), words.slice(best).join(' ')];
+}
+
+
 export default function ImmersiveHero() {
-  const { banners, products: catalog } = useStorefront();
+  const { banners } = useStorefront();
   // Every published slide is shown, in order. Each is an image slide or a video slide (the admin's choice).
   const slides = banners;
   const clips: (HeroClip | null)[] = slides.map((s, i) => slideClip(s, i));
@@ -60,7 +70,7 @@ export default function ImmersiveHero() {
   return (
     <section
       ref={root}
-      className="aqx"
+      className="aqx aqx-minimal"
       style={{ '--slide-dur': `${video.ready ? video.seconds : INTERVAL / 1000}s` } as React.CSSProperties}
       aria-roledescription="carousel"
       aria-label="Explore Prakruthi Aqua collections"
@@ -90,7 +100,7 @@ export default function ImmersiveHero() {
                   <span className="aqx-line" aria-hidden="true">{words(s.title)}</span>
                   <em className="aqx-line" aria-hidden="true">{words(s.accent, s.title.split(' ').length)}</em>
                 </Title>
-                <p className="aqx-lead">{s.description}</p>
+                <p className="aqx-lead">{descriptionLines(s.description).map((line, n) => <span className="aqx-description-line" key={n}>{line}{n === 0 ? ' ' : ''}</span>)}</p>
                 <div className="aqx-actions">
                   <Link className="aqx-cta" href={s.href}><span>Shop the collection</span><i><ArrowUpRight size={18} /></i></Link>
                   <Link className="aqx-ghost" href="/about/"><span className="aqx-play"><Play size={13} fill="currentColor" /></span>Our story</Link>
@@ -100,25 +110,7 @@ export default function ImmersiveHero() {
           })}
         </div>
 
-        <div className="aqx-products">
-          {slides.map((s, i) => {
-            const on = i === active;
-            const p = catalog.find((x) => x.slug === s.product);
-            const name = (p?.name || s.productName || s.label).replace('Prakruthi Aqua ', '');
-            const image = p?.image || s.productImage;
-            return (
-              <Link key={s.id} href={p ? productHref(p) : s.href} className={`aqx-product${on ? ' is-active' : ''}`} aria-hidden={!on} inert={!on}>
-                <span className="aqx-product-img">{image && <img src={image} alt="" loading={i === 0 ? 'eager' : 'lazy'} />}</span>
-                <span className="aqx-product-text">
-                  <small>Featured · {s.label}</small>
-                  <b>{name}</b>
-                  <i>{p ? money(p.price) : 'View collection'}</i>
-                </span>
-                <span className="aqx-product-go"><ArrowUpRight size={17} /></span>
-              </Link>
-            );
-          })}
-        </div>
+
       </div>
 
       <div className="aqx-index" role="group" aria-label="Choose a slide">
@@ -131,19 +123,6 @@ export default function ImmersiveHero() {
         ))}
       </div>
 
-      <div className="container aqx-foot">
-        <ul className="aqx-stats">
-          <li><b>500<sup>+</sup></b><span>Happy aquarists</span></li>
-          <li><b>50<sup>+</sup></b><span>Care products</span></li>
-          <li><b>10<sup>+</sup></b><span>Years of care</span></li>
-        </ul>
-        <a className="aqx-scroll" href="#dive"><span className="aqx-mouse" aria-hidden="true"><i /></span>Scroll to dive</a>
-        <div className="aqx-arrows">
-          <button type="button" aria-label="Previous slide" onClick={() => go(active - 1)}><ArrowLeft size={16} /></button>
-          <button type="button" aria-label="Next slide" onClick={() => go(active + 1)}><ArrowRight size={16} /></button>
-          <button type="button" aria-label={auto ? 'Pause slideshow' : 'Play slideshow'} aria-pressed={!auto} onClick={() => setAuto((a) => !a)}>{auto ? <Pause size={14} /> : <Play size={14} />}</button>
-        </div>
-      </div>
       <span className="aqx-count" aria-hidden="true" key={current.id}>{pad(active + 1)}</span>
     </section>
   );

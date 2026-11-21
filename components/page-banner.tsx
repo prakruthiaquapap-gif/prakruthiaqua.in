@@ -7,9 +7,9 @@ type Disc = { image: string; alt?: string; name?: string; price?: string; href?:
 
 type Props = {
   label: string; eyebrow?: string; title: string; accent: string; description: string;
-  image?: string; imageAlt?: string; inset?: string; insetAlt?: string; tag?: string;
+  backdropImage?: string; image?: string; imageAlt?: string; inset?: string; insetAlt?: string; tag?: string;
   primaryLabel?: string; primaryHref?: string; secondaryLabel?: string; secondaryHref?: string;
-  points?: string[]; compact?: boolean;
+  points?: string[]; compact?: boolean; variant?: 'story';
   disc?: Disc; stats?: [string, string][]; links?: [string, string][];
 };
 
@@ -39,9 +39,24 @@ export default function PageBanner(p: Props) {
     </div>
   );
 
+  if (p.variant === 'story') return <section className="story-banner" aria-labelledby="page-hero-title">
+    <img className="story-banner-photo" src={p.image} alt={p.imageAlt || ''} fetchPriority="high" />
+    <div className="container story-banner-inner story-banner-editorial">
+      <nav className="story-banner-breadcrumb" aria-label="Breadcrumb"><Link href="/">Home</Link><ArrowRight size={12} aria-hidden="true"/><span>{p.label}</span></nav>
+      <div className="story-banner-content">
+        <div className="story-banner-heading"><p className="story-banner-origin"><Leaf size={13}/>{p.eyebrow || p.label}</p>{title}</div>
+        <div className="story-banner-details"><p className="story-banner-description">{p.description}</p><div className="story-banner-buttons">
+          {p.primaryHref && <a className="story-banner-primary" href={p.primaryHref}>{p.primaryLabel}<ArrowDown size={16}/></a>}
+          {p.secondaryHref && <Link className="story-banner-secondary" href={p.secondaryHref}>{p.secondaryLabel}<ArrowUpRight size={16}/></Link>}
+        </div></div>
+      </div>
+    </div>
+  </section>;
+
   if (p.compact || !p.image) {
     return (
-      <section className="ph ph-compact" aria-labelledby="page-hero-title">
+      <section className={`ph ph-compact${p.backdropImage ? ' ph-image-banner' : ''}`} aria-labelledby="page-hero-title">
+        {p.backdropImage && <><img className="ph-backdrop-photo" src={p.backdropImage} alt="" fetchPriority="high"/><span className="ph-backdrop-shade" aria-hidden="true"/></>}
         <HeroBackdrop word={p.label} />
         <div className="container ph-compact-inner">
           {crumbs}

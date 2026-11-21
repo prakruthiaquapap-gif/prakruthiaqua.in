@@ -31,7 +31,6 @@ const services = [
   { icon: Leaf, title: 'Aqua fertilizers', text: 'Advanced plant nutrients and fertilizers that promote lush, healthy aquatic vegetation and balanced ecosystems.', image: '/images/plants.jpg', category: 'Plant fertilizers' },
   { icon: Droplets, title: 'Aquarium essentials', text: 'Professional-grade water conditioners, test kits, and equipment for maintaining optimal water quality.', image: '/images/water.jpg', category: 'Aquarium cleaners' },
 ];
-const stats: [string, string][] = [['10+', 'Years of experience'], ['50+', 'Care products'], ['500+', 'Happy aquarists']];
 const strip = [
   { image: '/images/aquarium.jpg', label: 'Fish', alt: 'Colourful fish in a thriving aquarium' },
   { image: '/images/plants.jpg', label: 'Plants', alt: 'Lush aquatic plants' },
@@ -42,28 +41,19 @@ export default function About() {
   return (
     <main id="main" className="about">
       <PageBanner
+        compact
+        backdropImage="/images/aquarium.jpg"
         label="Our story"
         eyebrow="From Bengaluru, with care"
         title="Rooted in nature."
         accent="Made for life."
         description="Prakruthi Aqua is your partner in aquarium care — fish nutrition, plant care and water essentials that help little underwater worlds thrive."
-        image="/images/aquarium-essentials.jpg"
-        imageAlt="A single orange goldfish with flowing fins against dark water"
-        disc={{ image: '/images/prakruthi-icon.svg', alt: 'Prakruthi Aqua tree emblem', name: 'Fish · Plants · Water', label: 'Our three roots', logo: true }}
         primaryLabel="Read our story"
         primaryHref="#our-story"
         secondaryLabel="Shop products"
         secondaryHref="/shop/"
-        stats={stats}
       />
 
-      <nav className="subnav" aria-label="About page sections">
-        <div className="container">
-          {[['our-story', 'Story'], ['vision', 'Vision'], ['mission', 'Mission'], ['values', 'Values'], ['what-we-do', 'What we do']].map(([id, label]) => (
-            <a href={`#${id}`} key={id}>{label}</a>
-          ))}
-        </div>
-      </nav>
 
       <section id="our-story" className="section anchor">
         <div className="container">

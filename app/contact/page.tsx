@@ -11,15 +11,13 @@ export default function Contact() {
   return (
     <main id="main">
       <PageBanner
+        compact
+        backdropImage="/images/water.jpg"
         label="Contact"
         eyebrow="Get in touch"
         title="Let’s talk."
         accent="We’re here to help."
         description="Questions about a product, or need advice for your aquarium? Our team is ready to help."
-        image="/images/water.jpg"
-        imageAlt="A peaceful underwater aquarium scene"
-        inset="/images/plants.jpg"
-        tag="Mon – Sat · Bengaluru"
         primaryLabel="Send a message"
         primaryHref="#contact-details"
         secondaryLabel="Explore the shop"

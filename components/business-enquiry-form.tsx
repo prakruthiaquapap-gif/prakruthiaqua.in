@@ -23,12 +23,14 @@ export default function BusinessEnquiryForm() {
     setPrepared(`https://wa.me/918904373735?text=${encodeURIComponent(text)}`);
   }
   return (
-    <form className="form-card" onSubmit={prepare} onChange={() => { if (prepared) setPrepared(''); }}>
+    <form className="form-card business-enquiry-form" onSubmit={prepare} onChange={() => { if (prepared) setPrepared(''); }}>
       <div className="form-head">
         <span className="icon-tile icon-tile-leaf"><MessageCircle size={20} /></span>
-        <div><p className="eyebrow">Let’s start a partnership</p><h2>Send enquiry via WhatsApp</h2></div>
+        <div><p className="eyebrow">Let’s start a partnership</p><h2>Tell us about your business.</h2></div>
       </div>
+      <p className="business-form-intro">Share a few details and the products you’re interested in. Our team will help you take the next step.</p>
       <div className="fields">
+        <div className="full business-form-section"><span>01</span><div><h3>Your business details</h3><p>Let us know who we’re speaking with.</p></div></div>
         <label>Business name *<input name="business" required maxLength={150} autoComplete="organization" placeholder="Your business name" /></label>
         <label>Contact person *<input name="person" required maxLength={100} autoComplete="name" placeholder="Full name" /></label>
         <label>Email address *<input name="email" type="email" required maxLength={200} autoComplete="email" placeholder="you@business.com" /></label>
@@ -39,6 +41,7 @@ export default function BusinessEnquiryForm() {
             {['Retailer', 'Wholesaler', 'Distributor', 'Aquarium Service Provider', 'Online Store', 'Other'].map((t) => <option key={t}>{t}</option>)}
           </select>
         </label>
+        <div className="full business-form-section"><span>02</span><div><h3>What are you looking for?</h3><p>Select your interests and share your requirements.</p></div></div>
         <fieldset className="full">
           <legend>Interested products <span>(select all that apply)</span></legend>
           <div className="checks">

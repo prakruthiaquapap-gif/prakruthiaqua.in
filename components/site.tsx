@@ -104,14 +104,15 @@ export function SiteProvider({ children }: { children: React.ReactNode }) {
   return (
     <Context.Provider value={ctx}>
       <div className={`site-chrome ${scrolled ? 'is-scrolled' : ''}`}>
-        <div className="announce">
-          <div className="container announce-inner">
-            <span className="announce-left"><Leaf size={13} /> A little care. A world of life.</span>
-            <span className="announce-mid">Delivered across India · Order requests confirmed personally</span>
-            <a href="tel:+918904373735" className="announce-phone"><PhoneCall size={13} /> +91 89043 73735</a>
+      <div className="ticker" aria-hidden="true">
+          <div className="ticker-track">
+            {[0, 1].map((k) => (
+              <span key={k}>
+                {['Trusted by aquarists', 'Delivered across India', 'Expert guidance', 'Healthy fish', 'Lush planted tanks', 'Crystal-clear water', 'Made in Bengaluru'].map((t) => <span key={t}>{t}<i>✦</i></span>)}
+              </span>
+            ))}
           </div>
-        </div>
-
+      </div>
         <header className="site-header">
           <div className="container header-inner">
             <Logo />
@@ -119,7 +120,7 @@ export function SiteProvider({ children }: { children: React.ReactNode }) {
             <nav className="header-nav" aria-label="Main">
               {nav.map(([url, label]) => url === '/shop/'
                 ? <ShopDropdown key={url} />
-                : <Link key={url} href={url} className="nav-link" aria-current={path === url ? 'page' : undefined}>{label}</Link>)}
+                : <Link key={url} href={url} className="nav-link" aria-current={path.replace(/\/$/, '') === url.replace(/\/$/, '') ? 'page' : undefined}>{label}</Link>)}
             </nav>
 
             <div className="header-tools">
@@ -131,20 +132,12 @@ export function SiteProvider({ children }: { children: React.ReactNode }) {
                 <ShoppingBag size={17} />
                 <span>{count}</span>
               </button>
-              <button className="icon-btn menu-btn" onClick={() => setMenu(true)} aria-label="Open menu"><Menu size={22} /></button>
+              <button className="icon-btn menu-btn" onClick={() => setMenu(true)} aria-label="Open menu" aria-expanded={menu} aria-controls="site-mobile-menu"><Menu size={22} /></button>
             </div>
           </div>
         </header>
       </div>
-      <div className="ticker" aria-hidden="true">
-          <div className="ticker-track">
-            {[0, 1].map((k) => (
-              <span key={k}>
-                {['Healthy fish', 'Lush planted tanks', 'Crystal-clear water', 'Made in Bengaluru', 'Trusted by aquarists', 'Delivered across India', 'Expert guidance'].map((t) => <span key={t}>{t}<i>✦</i></span>)}
-              </span>
-            ))}
-          </div>
-      </div>
+
 
       {children}
 
@@ -217,26 +210,29 @@ export function SiteProvider({ children }: { children: React.ReactNode }) {
       <nav className="tabbar" aria-label="Quick navigation">
         <Link href="/" aria-current={path === '/' ? 'page' : undefined}><Home size={20} /><span>Home</span></Link>
         <Link href="/shop/" aria-current={path.startsWith('/shop') ? 'page' : undefined}><Store size={20} /><span>Shop</span></Link>
-        <button onClick={() => setSearch(true)}><Search size={20} /><span>Search</span></button>
+        <button aria-label="Search products" aria-pressed={search} onClick={() => setSearch(true)}><Search size={20} /><span>Search</span></button>
         <Link href="/wishlist/" aria-current={path.startsWith('/wishlist') ? 'page' : undefined}><Heart size={20} /><span>Wishlist</span></Link>
-        <button onClick={() => setDrawer(true)}><span className="tabbar-bag"><ShoppingBag size={20} />{count > 0 && <b>{count}</b>}</span><span>Bag</span></button>
+        <button aria-label={`Open bag, ${count} items`} aria-pressed={drawer} onClick={() => setDrawer(true)}><span className="tabbar-bag"><ShoppingBag size={20} />{count > 0 && <b>{count}</b>}</span><span>Bag</span></button>
       </nav>
 
       {menu && (
         <div className="overlay" onClick={() => setMenu(false)}>
-          <div className="mobile-menu" role="dialog" aria-modal="true" aria-label="Menu" onClick={(e) => e.stopPropagation()}>
+          <div id="site-mobile-menu" className="mobile-menu" role="dialog" aria-modal="true" aria-label="Menu" onClick={(e) => e.stopPropagation()}>
             <div className="mobile-menu-head">
               <Logo />
               <button className="icon-btn" onClick={() => setMenu(false)} aria-label="Close menu"><X size={22} /></button>
             </div>
-            <nav className="mobile-menu-links">
+            <button className="mobile-menu-search" onClick={()=>{setMenu(false);setSearch(true)}}><Search size={18}/><span>Find something for your aquarium</span><ArrowRight size={16}/></button>
+            <p className="mobile-menu-section-label">Explore Prakruthi Aqua</p>
+            <nav className="mobile-menu-links" aria-label="Mobile main navigation">
               {[...nav, ['/business-enquiry/', 'Business Enquiry'], ['/wishlist/', 'Wishlist'], ...(user ? [['/orders/', 'My orders']] : []), ['/account/', user ? 'Logout' : 'Sign in / Sign up']].map(([url, label]) => (
-                <Link key={url} href={url} onClick={(e) => { setMenu(false); if (url === '/account/') { e.preventDefault(); if (user) void signOut(); else openAccount(); } }} aria-current={path === url ? 'page' : undefined}>
-                  {label} <ArrowUpRight size={18} />
+                <Link key={url} href={url} onClick={(e) => { setMenu(false); if (url === '/account/') { e.preventDefault(); if (user) void signOut(); else openAccount(); } }} aria-current={path.replace(/\/$/, '') === url.replace(/\/$/, '') ? 'page' : undefined}>
+                  <span className="mobile-menu-item-icon">{url==='/'?<Home size={18}/>:url==='/shop/'?<Store size={18}/>:url==='/about/'?<Leaf size={18}/>:url==='/contact/'?<MessageCircle size={18}/>:url==='/wishlist/'?<Heart size={18}/>:url==='/account/'?<UserRound size={18}/>:url==='/orders/'?<ShoppingBag size={18}/>:<Store size={18}/>}</span><span className="mobile-menu-item-label">{label}</span><ArrowRight size={16}/>
+
                 </Link>
               ))}
             </nav>
-            <a className="btn btn-leaf btn-block" href="https://dealers.prakruthiaqua.in/" target="_blank" rel="noopener noreferrer">Become a dealer <ArrowUpRight size={16} /></a>
+            <a className="btn btn-leaf btn-block mobile-dealer-link" href="https://dealers.prakruthiaqua.in/" target="_blank" rel="noopener noreferrer">Become a dealer <ArrowUpRight size={16} /></a>
             <MobileProductRanges onNavigate={() => setMenu(false)} />
             <a className="btn btn-dark btn-block" href="tel:+918904373735"><PhoneCall size={16} /> Call +91 89043 73735</a>
           </div>

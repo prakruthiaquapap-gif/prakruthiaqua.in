@@ -8,6 +8,7 @@ export default function WishlistPage() {
     <main id="main">
       <PageBanner
         compact
+        backdropImage="/images/aquarium.jpg"
         label="Wishlist"
         eyebrow="Your favourites"
         title="Your"
