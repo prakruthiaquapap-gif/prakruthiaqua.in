@@ -7,22 +7,29 @@
     "build": "next build --webpack",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "test:database": "node tests/database-security.mjs"
+    "test:database": "node tests/database-security.mjs",
+    "android:sync": "cap sync android",
+    "android:assets": "node scripts/android-assets.mjs",
+    "android:apk": "node scripts/build-android.mjs"
   },
   "dependencies": {
+    "@capacitor/android": "^7.6.10",
+    "@capacitor/core": "^7.6.10",
+    "@capacitor/splash-screen": "^7.0.5",
+    "@supabase/supabase-js": "^2.80.0",
+    "lucide-react": "^0.552.0",
     "next": "^16.0.0",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "@supabase/supabase-js": "^2.80.0",
-    "lucide-react": "^0.552.0"
+    "react-dom": "^19.2.0"
   },
   "devDependencies": {
-    "typescript": "^5.9.3",
+    "@capacitor/cli": "^7.6.10",
+    "@electric-sql/pglite": "0.5.15",
+    "@tailwindcss/postcss": "^4.1.0",
     "@types/node": "^24.0.0",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "tailwindcss": "^4.1.0",
-    "@tailwindcss/postcss": "^4.1.0",
-    "@electric-sql/pglite": "0.5.15"
+    "typescript": "^5.9.3"
   }
 }

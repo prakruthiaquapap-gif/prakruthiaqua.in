@@ -37,6 +37,7 @@ function PublicBrandLoader() {
   }, [visible]);
   if (!visible) return null;
   return <div className="brand-loader" role="dialog" aria-modal="true" aria-label="Prakruthi Aqua welcome video">
+    <video className="brand-loader-ambience" autoPlay muted playsInline preload="auto" aria-hidden="true"><source src="/videos/brand-loading.mp4" type="video/mp4" /></video>
     <video ref={video} autoPlay muted playsInline preload="auto" onEnded={done} onError={done} aria-hidden="true"><source src="/videos/brand-loading.mp4" type="video/mp4" /></video>
     <div className="brand-loader-bottom"><span role="status">Welcome to Prakruthi Aqua</span><button ref={skip} onClick={done}>Skip intro →</button></div>
   </div>;

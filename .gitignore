@@ -8,3 +8,14 @@ out/
 
 # Local secrets copy — never commit
 envfile
+
+# Android toolchain and build outputs
+.android-toolchain/
+.android-gradle/
+android/local.properties
+android/**/build/
+android/.gradle/
+*.keystore
+*.jks
+android/keystore.properties
+output/android/
