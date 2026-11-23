@@ -27,6 +27,8 @@ export default function ImmersiveHero() {
   const slides = banners;
   const clips: (HeroClip | null)[] = slides.map((s, i) => slideClip(s, i));
   const [active, setActive] = useState(0), [auto, setAuto] = useState(true), [hidden, setHidden] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
+  const [failedVideos, setFailedVideos] = useState<Record<number, boolean>>({});
   // A playing video drives its slide; image slides (and any video that can't play) use the timer.
   const [video, setVideo] = useState<{ ready: boolean; seconds: number }>({ ready: false, seconds: INTERVAL / 1000 });
   const root = useRef<HTMLElement>(null);
@@ -37,7 +39,10 @@ export default function ImmersiveHero() {
   useEffect(() => setActive((i) => Math.min(i, Math.max(0, count - 1))), [count]);
   useEffect(() => {
     const media = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const reduce = () => { if (media.matches) setAuto(false); };
+    const reduce = () => {
+      setReducedMotion(media.matches);
+      if (media.matches) setAuto(false);
+    };
     reduce();
     media.addEventListener('change', reduce);
     const visibility = () => setHidden(document.hidden);
@@ -79,10 +84,22 @@ export default function ImmersiveHero() {
     >
       <FitScreen />
       <div className="aqx-media" aria-hidden="true">
-        {slides.map((s, i) => (
-          <img key={s.id} src={s.image} alt="" className={i === active ? 'is-visible' : ''} fetchPriority={i === 0 ? 'high' : 'low'} loading={i === 0 ? 'eager' : 'lazy'} />
-        ))}
-        <HeroVideo clips={clips} active={active} autoplay={running} onAdvance={() => setActive((i) => (i + 1) % count)} onReady={(ready, seconds) => setVideo((v) => ({ ready, seconds: seconds || v.seconds }))} />
+        {slides.map((s, i) => {
+          // Only render the banner image for image-type slides, reduced-motion users, or when a video fails (e.g. APK fallback).
+          const showImg = !clips[i] || reducedMotion || !!failedVideos[i];
+          if (!showImg) return null;
+          return (
+            <img key={s.id} src={s.image} alt="" className={i === active ? 'is-visible' : ''} fetchPriority={i === 0 ? 'high' : 'low'} loading={i === 0 ? 'eager' : 'lazy'} />
+          );
+        })}
+        <HeroVideo
+          clips={clips}
+          active={active}
+          autoplay={running}
+          onAdvance={() => setActive((i) => (i + 1) % count)}
+          onReady={(ready, seconds) => setVideo((v) => ({ ready, seconds: seconds || v.seconds }))}
+          onFallback={(slideIndex) => setFailedVideos((prev) => (prev[slideIndex] ? prev : { ...prev, [slideIndex]: true }))}
+        />
       </div>
       <span className="aqx-veil" aria-hidden="true" />
       <Bubbles count={22} className="aqx-bubbles" />

@@ -479,7 +479,7 @@
 }
 
 /* Hero background video (desktop landscape / mobile portrait), cross-dissolve loop */
-.aqx-video { position: absolute; inset: 0; z-index: 1; opacity: 0; transition: opacity 1.2s var(--ease); background: var(--ink); }
+.aqx-video { position: absolute; inset: 0; z-index: 1; opacity: 0; transition: opacity 0.35s var(--ease); background: var(--ink); }
 .aqx-video.is-ready { opacity: 1; }
 .aqx-video video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.9s linear; }
 .aqx-video video.is-front { opacity: 1; }
@@ -576,7 +576,7 @@
 /* ==========================================================================
    Shop by world — living aquarium scene
    ========================================================================== */
-.aqw-scene { position: relative; isolation: isolate; color: var(--white);
+.aqw-scene { position: relative; isolation: isolate; contain: layout style paint; color: var(--white);
   background: linear-gradient(180deg, var(--ink) 0%, var(--forest-deep) 42%, var(--ink-3) 76%, var(--forest) 100%);
   padding-bottom: clamp(110px, 11vw, 170px) !important; }
 .aqw-scene .aqw-wave { color: var(--ink); z-index: 1; }
@@ -586,14 +586,15 @@
 .aqw-scene .aq-eyebrow { color: var(--sage); }
 .aqw-scene .aq-head-side > p { color: rgba(255, 255, 255, 0.72); }
 
-.tank-scene { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+.tank-scene { position: absolute; inset: 0; z-index: 0; overflow: hidden; contain: layout style paint; pointer-events: none; }
+.tank-scene:not(.is-in-view), .tank-scene:not(.is-in-view) * { animation-play-state: paused !important; }
 .tank-surface { position: absolute; left: 0; right: 0; top: 0; height: 140px; background: linear-gradient(180deg, rgba(195, 207, 123, 0.16), transparent); }
-.tank-scene .tank-rays { opacity: 0.85; }
+.tank-scene .tank-rays { opacity: 0.55; filter: none; mix-blend-mode: normal; }
 .tank-scene .tank-caustics { inset: 0 0 45% 0; opacity: 0.05; }
 .tank-scene .tank-bubbles i { border-color: rgba(195, 207, 123, 0.45); }
 
 /* Fish schools at three depths */
-.tank-school { position: absolute; left: 0; width: 280px; height: 120px; animation: tank-swim var(--dur) linear infinite; animation-delay: var(--delay); will-change: transform; }
+.tank-school { position: absolute; left: 0; width: 280px; height: 120px; animation: tank-swim var(--dur) linear infinite; animation-delay: var(--delay); }
 .tank-school.is-left { animation-name: tank-swim-left; }
 @keyframes tank-swim { from { transform: translateX(-320px); } to { transform: translateX(calc(100vw + 40px)); } }
 @keyframes tank-swim-left { from { transform: translateX(calc(100vw + 40px)) scaleX(-1); } to { transform: translateX(-320px) scaleX(-1); } }
@@ -601,10 +602,9 @@
 .tank-fish svg { display: block; width: 100%; fill: currentColor; transform-origin: 72% 50%; animation: tank-wiggle var(--wig) ease-in-out infinite; }
 @keyframes tank-wiggle { 0%, 100% { transform: skewY(-4deg) scaleX(1); } 50% { transform: skewY(4deg) scaleX(0.95); } }
 @keyframes tank-bob { 0%, 100% { translate: 0 0; } 50% { translate: 0 -9px; } }
-.tank-school.is-far { color: rgba(195, 207, 123, 0.2); filter: blur(1.4px); }
-.tank-school.is-mid { color: rgba(195, 207, 123, 0.32); filter: blur(0.5px); }
+.tank-school.is-far { color: rgba(195, 207, 123, 0.18); }
+.tank-school.is-mid { color: rgba(195, 207, 123, 0.3); }
 .tank-school.is-near { color: rgba(195, 207, 123, 0.42); }
-.tank-school.is-near .tank-fish svg { filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.35)); }
 
 /* Sandy floor, pebbles and swaying plants */
 .tank-floor { position: absolute; left: -6%; right: -6%; bottom: -10px; height: clamp(110px, 11vw, 160px); border-radius: 50% 50% 0 0 / 46px 46px 0 0;
@@ -630,15 +630,15 @@
 .tank-plant.is-leaf .tank-blade:nth-child(3n) { fill: var(--leaf); }
 .tank-plant.is-sage .tank-blade { fill: var(--sage); opacity: 0.55; }
 .tank-plant.is-sage .tank-blade:nth-child(odd) { opacity: 0.4; }
-.tank-particles { position: absolute; inset: 0; opacity: 0.55;
+/* Static subtle suspended particles — avoids non-composited background-position repaints on scroll */
+.tank-particles { position: absolute; inset: 0; opacity: 0.45;
   background-image: radial-gradient(rgba(255, 255, 255, 0.4) 1px, transparent 1.6px), radial-gradient(rgba(195, 207, 123, 0.3) 1px, transparent 1.6px);
-  background-size: 90px 110px, 150px 130px; background-position: 0 0, 40px 60px; animation: tank-drift 40s linear infinite; }
-@keyframes tank-drift { to { background-position: 90px -110px, -110px -200px; } }
+  background-size: 90px 110px, 150px 130px; background-position: 0 0, 40px 60px; }
 
 /* Cards: glass tanks cut to the arch shape (clip-path, so nothing ever shows outside it) */
 .aqw-scene .aqw-item { --tank-r: 50% 50% 26px 26px / 33.3% 33.3% 26px 26px; overflow: visible; background: none; border-radius: 0; box-shadow: none; isolation: auto; }
 .aqw-scene .aqw-item::after { content: none; }
-.aqw-scene .aqw-item::before { content: ''; position: absolute; z-index: -1; left: 10%; right: 10%; bottom: -24px; height: 36px; inset-inline: 10%; top: auto; border-radius: 50%; background: radial-gradient(closest-side, rgba(0, 0, 0, 0.55), transparent); filter: blur(4px); transition: opacity 0.5s, transform 0.5s var(--ease); }
+.aqw-scene .aqw-item::before { content: ''; position: absolute; z-index: -1; left: 10%; right: 10%; bottom: -24px; height: 36px; inset-inline: 10%; top: auto; border-radius: 50%; background: radial-gradient(closest-side, rgba(0, 0, 0, 0.55), transparent); transition: opacity 0.5s, transform 0.5s var(--ease); }
 .aqw-scene .aqw-item:hover::before { opacity: 0.7; transform: scale(0.9); }
 .aqw-tank { position: absolute; inset: 0; display: block; overflow: hidden; isolation: isolate; border-radius: var(--tank-r); clip-path: inset(0 round var(--tank-r)); background: var(--forest-deep);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18); }
@@ -662,7 +662,6 @@
 @media (max-width: 720px) {
   .aqw-scene { padding-bottom: 96px !important; }
   .tank-plant { transform: scale(0.48); }
-  .tank-school.is-near { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .tank-school, .tank-fish, .tank-fish svg, .tank-blade, .tank-particles { animation: none !important; }
@@ -687,9 +686,9 @@
   .aqz { padding: 44px 0 36px; }
   .aqz-panel { padding: 20px 0; }
 }
-/* Realistic plants: shaded blades, broad-leaf swords, depth blur */
-.tank-plant.is-far { filter: blur(1.5px) brightness(0.8); opacity: 0.85; }
-.tank-plant.is-near { filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.35)); }
+/* Realistic plants: shaded blades, broad-leaf swords (opacity depth without GPU blur/drop-shadow) */
+.tank-plant.is-far { opacity: 0.65; }
+.tank-plant.is-near { opacity: 0.96; }
 .tank-plant .tank-blade { fill-opacity: 0.95; }
 .tank-leaf { transform-box: view-box; transform-origin: 100px 400px; animation: tank-leaf-sway 7s ease-in-out infinite alternate; }
 @keyframes tank-leaf-sway { from { rotate: -3deg; } to { rotate: 3deg; } }
@@ -716,7 +715,7 @@
 .aqx-video video { transition: opacity 1.1s linear; object-position: 50% 50%; }
 
 /* Worlds: the five tanks drift gently, each in its own pattern, one after another */
-.aqw-scene .aqw-tank { animation: aqw-float-a 7s ease-in-out infinite; will-change: transform; }
+.aqw-scene .aqw-tank { animation: aqw-float-a 7s ease-in-out infinite; }
 .aqw-scene .aqw-item:nth-child(2) .aqw-tank { animation: aqw-float-b 8s ease-in-out 0.9s infinite; }
 .aqw-scene .aqw-item:nth-child(3) .aqw-tank { animation: aqw-float-c 9s ease-in-out 1.8s infinite; }
 .aqw-scene .aqw-item:nth-child(4) .aqw-tank { animation: aqw-float-b 7.5s ease-in-out 2.7s infinite reverse; }
@@ -724,6 +723,14 @@
 @keyframes aqw-float-a { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-14px) rotate(-0.8deg); } }
 @keyframes aqw-float-b { 0%, 100% { transform: translateY(-4px) rotate(0.5deg); } 50% { transform: translateY(10px) rotate(-0.5deg); } }
 @keyframes aqw-float-c { 0%, 100% { transform: translate(0, 0); } 33% { transform: translate(3px, -11px); } 66% { transform: translate(-3px, -5px); } }
+/* Mobile & touch devices: keep Shop by World smooth and lag-free on low-end phones */
+@media (max-width: 960px), (hover: none) and (pointer: coarse) {
+  .aqw-scene .aqw-item::before { display: none; }
+  .aqw-scene .aqw-tank { clip-path: none; animation: none !important; will-change: auto; }
+  .aqw-scene .aqw-wave path { animation: none !important; }
+  .tank-school, .tank-rays, .tank-bubbles, .tank-particles { display: none !important; }
+  .tank-plant .tank-blade, .tank-plant .tank-leaf { animation: none !important; }
+}
 @media (prefers-reduced-motion: reduce) {
   .aqw-scene .aqw-tank { animation: none !important; }
 }

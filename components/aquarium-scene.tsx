@@ -1,4 +1,5 @@
-import type { CSSProperties } from 'react';
+'use client';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Bubbles, LightRays } from './aquatic-fx';
 
 /* A living aquarium backdrop: light from the surface, fish schools at three depths,
@@ -74,7 +75,7 @@ export function Sword({ id, x, h, leaves, hue, delay, flip, depth = 'near' }: { 
         <defs>
           <linearGradient id={id} x1="0" y1="1" x2="0" y2="0">
             <stop offset="0" style={{ stopColor: a }} />
-            <stop offset="0.5" style={{ stopColor: b }} />
+            <stop offset="0.55" style={{ stopColor: b }} />
             <stop offset="1" style={{ stopColor: c }} />
           </linearGradient>
         </defs>
@@ -98,8 +99,23 @@ export function Sword({ id, x, h, leaves, hue, delay, flip, depth = 'near' }: { 
 }
 
 export default function AquariumScene() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [inView, setInView] = useState(false);
+
+  // Pause all decorative aquarium animations whenever the section is scrolled off-screen.
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || !('IntersectionObserver' in window)) return;
+    const io = new IntersectionObserver(
+      ([entry]) => setInView(entry.isIntersecting),
+      { rootMargin: '120px 0px' },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
   return (
-    <div className="tank-scene" aria-hidden="true">
+    <div ref={ref} className={`tank-scene${inView ? ' is-in-view' : ''}`} aria-hidden="true">
       <span className="tank-surface" />
       <LightRays className="tank-rays" />
       {schools.map((s, k) => (
