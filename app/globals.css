@@ -2358,10 +2358,8 @@ h1 em, h2 em, h3 em, blockquote em { font-style: normal; font-weight: 300; lette
  .shop-page .shop-toolbar .select-wrap { flex:0 1 auto; padding:0 10px; }
 }
 
-/* Portrait welcome screen keeps the complete logo over an edge-to-edge backdrop. */
-.brand-loader>video.brand-loader-ambience { display: none; }
+/* Mobile intro fills the portrait viewport with the tree centred. */
 @media(max-width:720px) {
-  .brand-loader>video.brand-loader-ambience { display: block; object-fit: cover; filter: blur(28px) brightness(.48); transform: scale(1.12); }
-  .brand-loader>video:not(.brand-loader-ambience) { object-fit: contain; z-index: 1; }
+  .brand-loader>video { object-fit: cover; object-position: 50% 50%; }
   .brand-loader-bottom { z-index: 2; bottom: max(28px,env(safe-area-inset-bottom)); }
 }

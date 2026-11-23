@@ -38,3 +38,15 @@ Verify on a real Android phone before distribution: startup/offline state, login
 ### Android 1.0.1
 
 The native wrapper reserves space for status/navigation bars, display cutouts and the keyboard. Background video playback no longer requires a user gesture. An app-only patch on the two trusted store hosts disables background video controls and fits the welcome video inside the available screen without cropping its logo. This patch is packaged in the APK; it does not require a website deployment. Build and APK signature verification passed; physical-device playback and inset checks remain required.
+
+### Android 1.0.4
+
+The mobile welcome video now fills the screen with a centered portrait crop of the tree. The blurred duplicate video has been removed. The native transparent video poster and safe system-bar insets are retained.
+
+### Android 1.0.5
+
+Android system Back now navigates the WebView's store history (including client-side routes). If there is no previous store page, a nested page returns to the homepage. Back at the homepage without prior store history asks Stay/Exit instead of immediately closing the app. Initial blank/offline pages are excluded from back navigation. Verify button and gesture navigation on a physical Android device.
+
+### Android 1.0.6
+
+APK-only banner compatibility mode uses the store's existing banner images instead of background video, avoiding device decoder green frames. After the intro closes, it resets the site's carousel to the first slide before revealing it. Website playback/design is unchanged. A mocked DOM check verified intro gating, one-time first-slide reset and image fallback. Physical device verification is still required.

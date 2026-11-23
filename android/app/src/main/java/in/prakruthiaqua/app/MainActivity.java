@@ -5,6 +5,9 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.view.View;
 import android.webkit.WebView;
+import android.webkit.WebBackForwardList;
+import androidx.activity.OnBackPressedCallback;
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
@@ -17,6 +20,7 @@ import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 
 public class MainActivity extends BridgeActivity {
+    private boolean resetHistoryAtHome = false;
     @Override
     protected void load() {
         // Configure playback before Capacitor starts loading the hosted store.
@@ -48,6 +52,33 @@ public class MainActivity extends BridgeActivity {
         });
         ViewCompat.requestApplyInsets(container);
 
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override public void handleOnBackPressed() {
+                WebBackForwardList history = webView.copyBackForwardList();
+                int previous = history.getCurrentIndex() - 1;
+                // Skip the WebView's initial blank/local page; only navigate store history.
+                if (previous >= 0 && isStoreUrl(history.getItemAtIndex(previous).getUrl())) {
+                    webView.goBack();
+                    return;
+                }
+                Uri current = Uri.parse(webView.getUrl() == null ? "" : webView.getUrl());
+                String path = current.getPath();
+                boolean home = isStoreUrl(current.toString()) && (path == null || path.isEmpty() || "/".equals(path))
+                    && current.getQuery() == null && current.getFragment() == null;
+                if (!home) {
+                    resetHistoryAtHome = true;
+                    webView.loadUrl("https://prakruthiaqua.in/");
+                    return;
+                }
+                new AlertDialog.Builder(MainActivity.this)
+                    .setTitle("Exit Prakruthi Aqua?")
+                    .setMessage("Would you like to close the app?")
+                    .setNegativeButton("Stay", (dialog, which) -> dialog.dismiss())
+                    .setPositiveButton("Exit", (dialog, which) -> finish())
+                    .show();
+            }
+        });
+
         final String videoScript = readVideoScript();
         bridge.setWebViewClient(new BridgeWebViewClient(bridge) {
             private void prepareVideos(WebView view, String url) {
@@ -63,9 +94,20 @@ public class MainActivity extends BridgeActivity {
             }
             @Override public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
+                if (resetHistoryAtHome && isStoreUrl(url) && "/".equals(Uri.parse(url).getPath())) {
+                    view.clearHistory();
+                    resetHistoryAtHome = false;
+                }
                 prepareVideos(view, url);
             }
         });
+    }
+
+    private boolean isStoreUrl(String url) {
+        if (url == null) return false;
+        Uri uri = Uri.parse(url);
+        return "https".equals(uri.getScheme()) && ("prakruthiaqua.in".equals(uri.getHost())
+            || "www.prakruthiaqua.in".equals(uri.getHost()));
     }
 
     private String readVideoScript() {
