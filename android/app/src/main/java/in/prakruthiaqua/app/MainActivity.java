@@ -1,6 +1,7 @@
 package in.prakruthiaqua.app;
 
 import android.graphics.Color;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.view.View;
 import android.webkit.WebView;
@@ -9,6 +10,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import com.getcapacitor.BridgeActivity;
+import com.getcapacitor.BridgeWebChromeClient;
 import com.getcapacitor.BridgeWebViewClient;
 import java.io.InputStream;
 import java.io.ByteArrayOutputStream;
@@ -22,6 +24,13 @@ public class MainActivity extends BridgeActivity {
         if (initialView != null) initialView.getSettings().setMediaPlaybackRequiresUserGesture(false);
         super.load();
         WebView webView = bridge.getWebView();
+        // Android's default video poster contains a giant play icon; background
+        // videos must remain transparent until their first decoded frame.
+        webView.setWebChromeClient(new BridgeWebChromeClient(bridge) {
+            @Override public Bitmap getDefaultVideoPoster() {
+                return Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
+            }
+        });
         webView.getSettings().setMediaPlaybackRequiresUserGesture(false);
 
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);

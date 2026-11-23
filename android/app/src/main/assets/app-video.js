@@ -18,6 +18,8 @@
       backdrop.autoplay = true;
       loader.prepend(backdrop);
     }
+    // An explicit transparent poster also suppresses vendor WebView play artwork.
+    video.poster = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
     video.controls = false;
     video.muted = true;
     video.defaultMuted = true;
