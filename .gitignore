@@ -19,3 +19,6 @@ android/.gradle/
 *.jks
 android/keystore.properties
 output/android/
+
+# Private Android upload signing credentials
+.android-signing/

@@ -1,6 +1,7 @@
 'use client';
 import { useAuthPopup } from './auth-popup';
 import AccountMenu from './account-menu';
+import StoreDownload from './store-download';
 import { businessAddress } from '@/lib/business-info';
 import ShopDropdown, { MobileProductRanges } from './shop-dropdown';
 import { WishlistButton, WishlistLink } from './wishlist';
@@ -161,9 +162,10 @@ export function SiteProvider({ children }: { children: React.ReactNode }) {
               <p>Fish nutrition, plant care, water care and bird food — made with care in Bengaluru for the little worlds you look after.</p>
               <div className="footer-contact">
                 <a href="tel:+918904373735"><PhoneCall size={15} /> +91 89043 73735</a>
-                <a href="mailto:info@prakruthiaqua.in"><Mail size={15} /> info@prakruthiaqua.in</a>
+                <a href="mailto:prakruthiaqua.pap@gmail.com"><Mail size={15} /> prakruthiaqua.pap@gmail.com</a>
                 <span><MapPin size={15} /> {businessAddress}</span>
               </div>
+              <StoreDownload />
             </div>
             <div>
               <h3>Shop</h3>

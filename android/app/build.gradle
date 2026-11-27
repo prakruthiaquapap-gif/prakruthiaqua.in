@@ -1,5 +1,14 @@
 apply plugin: 'com.android.application'
 
+def uploadKeyPath = System.getenv('ANDROID_KEYSTORE_PATH')
+def uploadKeyPassword = System.getenv('ANDROID_KEYSTORE_PASSWORD')
+def uploadKeyAlias = System.getenv('ANDROID_KEY_ALIAS')
+def uploadAliasPassword = System.getenv('ANDROID_KEY_PASSWORD')
+if ([uploadKeyPath, uploadKeyPassword, uploadKeyAlias, uploadAliasPassword].any { it } &&
+    ![uploadKeyPath, uploadKeyPassword, uploadKeyAlias, uploadAliasPassword].every { it }) {
+    throw new GradleException('Set all four ANDROID_KEYSTORE_PATH, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS and ANDROID_KEY_PASSWORD signing variables.')
+}
+
 android {
     namespace "in.prakruthiaqua.app"
     compileSdk rootProject.ext.compileSdkVersion
@@ -7,8 +16,8 @@ android {
         applicationId "in.prakruthiaqua.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 7
-        versionName "1.0.6"
+        versionCode 13
+        versionName "1.0.12"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,8 +25,19 @@ android {
             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        if (uploadKeyPath) {
+            upload {
+                storeFile file(uploadKeyPath)
+                storePassword uploadKeyPassword
+                keyAlias uploadKeyAlias
+                keyPassword uploadAliasPassword
+            }
+        }
+    }
     buildTypes {
         release {
+            if (uploadKeyPath) signingConfig signingConfigs.upload
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

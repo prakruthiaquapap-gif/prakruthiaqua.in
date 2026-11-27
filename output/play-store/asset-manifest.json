@@ -1,0 +1,68 @@
+[
+  {
+    "file": "branding/app-icon-512.png",
+    "width": 512,
+    "height": 512,
+    "bytes": 104812
+  },
+  {
+    "file": "branding/feature-graphic-1024x500.png",
+    "width": 1024,
+    "height": 500,
+    "bytes": 981029
+  },
+  {
+    "file": "phone/phone-01-home.jpg",
+    "width": 1080,
+    "height": 1920,
+    "bytes": 197310
+  },
+  {
+    "file": "phone/phone-02-shop.jpg",
+    "width": 1080,
+    "height": 1920,
+    "bytes": 193135
+  },
+  {
+    "file": "phone/phone-03-product.jpg",
+    "width": 1080,
+    "height": 1920,
+    "bytes": 162925
+  },
+  {
+    "file": "phone/phone-04-contact.jpg",
+    "width": 1080,
+    "height": 1920,
+    "bytes": 207172
+  },
+  {
+    "file": "phone/phone-05-product-image.jpg",
+    "width": 1080,
+    "height": 1920,
+    "bytes": 117286
+  },
+  {
+    "file": "tablet-7-inch/tablet7-01-our-story.jpg",
+    "width": 1200,
+    "height": 1920,
+    "bytes": 321643
+  },
+  {
+    "file": "tablet-7-inch/tablet7-02-shop.jpg",
+    "width": 1200,
+    "height": 1920,
+    "bytes": 269585
+  },
+  {
+    "file": "tablet-10-inch/tablet10-01-our-story.jpg",
+    "width": 1600,
+    "height": 2560,
+    "bytes": 482864
+  },
+  {
+    "file": "tablet-10-inch/tablet10-02-shop.jpg",
+    "width": 1600,
+    "height": 2560,
+    "bytes": 420425
+  }
+]

@@ -9,6 +9,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read
     steps:
@@ -27,8 +28,19 @@ jobs:
         env:
           CAPACITOR_SERVER_URL: ${{ inputs.website_url }}
         run: npm run android:apk
+      - name: Record build identity
+        env:
+          STORE_URL: ${{ inputs.website_url }}
+        run: |
+          node -e 'const fs = require("node:fs"); fs.writeFileSync("output/android/build-info.json", JSON.stringify({ commit: process.env.GITHUB_SHA, run: process.env.GITHUB_RUN_NUMBER, website: process.env.STORE_URL }, null, 2) + "\n");'
+          cd output/android
+          sha256sum Prakruthi-Aqua-debug.apk > SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: Prakruthi-Aqua-APK
-          path: output/android/Prakruthi-Aqua-debug.apk
+          name: Prakruthi-Aqua-APK-${{ github.run_number }}
+          path: |
+            output/android/Prakruthi-Aqua-debug.apk
+            output/android/build-info.json
+            output/android/SHA256SUMS.txt
+          retention-days: 14
           if-no-files-found: error

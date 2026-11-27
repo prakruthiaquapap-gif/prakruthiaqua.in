@@ -10,7 +10,9 @@
     "test:database": "node tests/database-security.mjs",
     "android:sync": "cap sync android",
     "android:assets": "node scripts/android-assets.mjs",
-    "android:apk": "node scripts/build-android.mjs"
+    "android:apk": "node scripts/build-android.mjs",
+    "android:aab": "node scripts/build-android.mjs --aab",
+    "android:apk:release": "node scripts/build-android.mjs --release"
   },
   "dependencies": {
     "@capacitor/android": "^7.6.10",

@@ -2363,3 +2363,11 @@ h1 em, h2 em, h3 em, blockquote em { font-style: normal; font-weight: 300; lette
   .brand-loader>video { object-fit: cover; object-position: 50% 50%; }
   .brand-loader-bottom { z-index: 2; bottom: max(28px,env(safe-area-inset-bottom)); }
 }
+
+/* Browser-only app download badge, hidden by native platform detection. */
+.footer-app-download { margin-top: 22px; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.footer-app-download > span { color: var(--leaf); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; }
+.footer-app-download a { display: inline-flex; margin-left: -10px; border-radius: 8px; transition: opacity .2s ease; }
+.footer-app-download a:hover { opacity: .85; }
+.footer-app-download a:focus-visible { outline: 2px solid var(--leaf); outline-offset: 2px; }
+.footer-app-download img { display: block; width: 180px; height: auto; }
