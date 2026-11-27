@@ -165,7 +165,6 @@ export function SiteProvider({ children }: { children: React.ReactNode }) {
                 <a href="mailto:prakruthiaqua.pap@gmail.com"><Mail size={15} /> prakruthiaqua.pap@gmail.com</a>
                 <span><MapPin size={15} /> {businessAddress}</span>
               </div>
-              <StoreDownload />
             </div>
             <div>
               <h3>Shop</h3>
@@ -188,7 +187,8 @@ export function SiteProvider({ children }: { children: React.ReactNode }) {
                 <li><Link href="/wishlist/">Wishlist</Link></li>
               </ul>
             </div>
-            <div>
+            <div className="footer-hours-column">
+              <StoreDownload />
               <h3>Hours</h3>
               <ul className="footer-hours">
                 <li><span>Mon – Fri</span> 9:00 – 18:00</li>
