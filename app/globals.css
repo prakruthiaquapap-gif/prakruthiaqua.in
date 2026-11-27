@@ -2372,4 +2372,4 @@ h1 em, h2 em, h3 em, blockquote em { font-style: normal; font-weight: 300; lette
 .footer-app-download a:focus-visible { outline: 2px solid var(--leaf); outline-offset: 2px; }
 .footer-app-download img { display: block; width: 180px; height: auto; }
 
-.footer-hours-column .footer-app-download { margin-top: 0; margin-bottom: 24px; }
+.footer-hours-column .footer-app-download { margin-top: 24px; margin-bottom: 0; }

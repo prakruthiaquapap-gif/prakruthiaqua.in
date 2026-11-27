@@ -188,13 +188,13 @@ export function SiteProvider({ children }: { children: React.ReactNode }) {
               </ul>
             </div>
             <div className="footer-hours-column">
-              <StoreDownload />
               <h3>Hours</h3>
               <ul className="footer-hours">
                 <li><span>Mon – Fri</span> 9:00 – 18:00</li>
                 <li><span>Saturday</span> 10:00 – 16:00</li>
                 <li><span>Sunday</span> Closed</li>
               </ul>
+              <StoreDownload />
             </div>
           </div>
 
